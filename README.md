@@ -47,11 +47,20 @@ python -m eligibility.demo
 python -m card_economics.compare
 ```
 
+Or explore both MVPs in the local dashboard:
+
+```bash
+streamlit run dashboard.py
+```
+
+The dashboard opens an eligibility scenario builder and a card-economics
+assumption lab. It calls the same deterministic functions used by the CLI demos.
+
 Both run without an API key. Set `ANTHROPIC_API_KEY` to enable the explanation and memo layers; without it, the modules print the structured output and skip the narration.
 
-The current test suite contains 30 tests covering rule ordering, multi-reason
+The test suite covers rule ordering, multi-reason
 diagnostics, narration boundaries and fallbacks, economic thresholds, unit
-economics, and volume sensitivity.
+economics, volume sensitivity, and dashboard rendering.
 
 ## See also
 

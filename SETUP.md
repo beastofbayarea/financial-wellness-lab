@@ -38,8 +38,17 @@ python -m eligibility.demo
 python -m card_economics.compare
 ```
 
-The current suite has 30 tests. Both examples work offline and use deterministic
-fallback text when narration is unavailable.
+Launch the combined dashboard:
+
+```bash
+streamlit run dashboard.py
+```
+
+Streamlit prints the local address (normally `http://localhost:8501`) and opens
+it in the default browser. Stop the server with `Ctrl+C`.
+
+The examples and dashboard work offline and use deterministic fallback text
+when narration is unavailable.
 
 ## Optional narration
 

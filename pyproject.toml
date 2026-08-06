@@ -3,13 +3,13 @@ name = "financial-wellness-lab"
 version = "0.1.0"
 description = "Where consumer-credit decisions should be deterministic, and where language belongs"
 requires-python = ">=3.10"
-dependencies = ["PyYAML>=6.0"]
+dependencies = ["PyYAML>=6.0.3", "streamlit>=1.61.1"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4"]
+dev = ["pytest>=9.1.1"]
 
 [tool.setuptools.packages.find]
 include = ["eligibility*", "card_economics*", "ewa_sim*", "shared*"]
 
 [tool.pytest.ini_options]
-testpaths = ["eligibility", "card_economics"]
+testpaths = ["eligibility", "card_economics", "tests"]

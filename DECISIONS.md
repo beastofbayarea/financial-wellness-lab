@@ -81,3 +81,21 @@ pre-declared margin threshold visible.
 **Consequence.** Callers must present both fields. In the default scenario,
 Program manager ranks first, but its $0.77M lead is below the $1.50M
 decisiveness threshold.
+
+---
+
+## D7 — One thin dashboard over both deterministic engines
+
+**Context.** The CLI demos prove the two MVPs work, but make scenario comparison
+slower for readers who do not want to edit Python or YAML.
+
+**Decision.** Provide one Streamlit dashboard with separate eligibility and card
+economics tabs. The UI imports the existing rule and model functions.
+
+**Why.** A thin presentation layer makes both MVPs testable without creating a
+second implementation of either decision path. Streamlit also keeps the project
+Python-only and locally runnable.
+
+**Consequence.** Streamlit becomes a runtime dependency. Dashboard smoke tests
+verify that both tabs render, while domain tests remain the source of truth for
+the calculations.
