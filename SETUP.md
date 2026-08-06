@@ -1,67 +1,68 @@
-# Pushing this repo
+# Development setup
 
-Commit in increments, not one drop. `initial commit` with 25 files tells a
-different story than a build log. Suggested sequence:
+The project supports Python 3.10 or newer and has one runtime dependency,
+PyYAML. Pytest is included in the optional `dev` dependency group.
+
+## Clone and install
 
 ```bash
+git clone https://github.com/beastofbayarea/financial-wellness-lab.git
 cd financial-wellness-lab
-git init -b main
-
-git add README.md DECISIONS.md LIMITATIONS.md pyproject.toml .gitignore
-git commit -m "scaffold: thesis, decision records, and stated limitations"
-
-git add shared/
-git commit -m "shared: explanation layer with an allowlisted fact boundary"
-
-git add eligibility/rules.py eligibility/__init__.py
-git commit -m "eligibility: deterministic rules, every denial carries a remedy"
-
-git add eligibility/tests/
-git commit -m "eligibility: assert the narrator cannot see decision inputs"
-
-git add eligibility/demo.py eligibility/README.md
-git commit -m "eligibility: runnable demo, degrades cleanly without an API key"
-
-git add card_economics/assumptions.yaml card_economics/model.py card_economics/__init__.py
-git commit -m "card economics: config-driven paths with pre-declared walk-away thresholds"
-
-git add card_economics/tests/
-git commit -m "card economics: assert every threshold actually binds"
-
-git add card_economics/compare.py card_economics/README.md
-git commit -m "card economics: comparison runner and memo layer"
-
-git add ewa_sim/
-git commit -m "ewa sim: scope note for the planned third module"
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
 ```
 
-Then create the repo on GitHub (public) and push:
+On Windows PowerShell, replace the activation command with:
 
-```bash
-git remote add origin git@github.com:<you>/financial-wellness-lab.git
-git push -u origin main
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-## Verify before you push
+If PowerShell blocks local activation scripts, the environment can still be
+used without activation:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pytest
+```
+
+## Verify the checkout
+
+Run the complete suite and both executable examples from the repository root:
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest                          # 23 passing
+python -m pytest
 python -m eligibility.demo
 python -m card_economics.compare
 ```
 
-## Repo settings
+The current suite has 30 tests. Both examples work offline and use deterministic
+fallback text when narration is unavailable.
 
-- **Public** from day one. A private repo you have to grant access to during a
-  call is a repo that does not exist.
-- **Description:** "Where consumer-credit decisions should be deterministic,
-  and where language belongs."
-- **Topics:** `fintech`, `consumer-credit`, `product-strategy`, `llm`
-- No company name anywhere, in the repo name or the description.
+## Optional narration
 
-## Optional, worth ten minutes
+Set `ANTHROPIC_API_KEY` to allow `shared/narrator.py` to call Anthropic's
+Messages API using the model configured in that module. This is optional: API
+availability never changes an eligibility decision or an economic calculation.
 
-Add `.github/workflows/test.yml` running `pytest` on push. A green badge in the
-README does more for credibility than another module.
+```bash
+export ANTHROPIC_API_KEY="your-key"
+```
+
+```powershell
+$env:ANTHROPIC_API_KEY = "your-key"
+```
+
+Do not commit API keys or local environment files. The code does not load a
+`.env` file automatically.
+
+## Editing assumptions
+
+- Eligibility thresholds and limits: `eligibility/rules_config.yaml`
+- Card portfolio, revenue, path, and walk-away assumptions:
+  `card_economics/assumptions.yaml`
+
+Configuration is loaded when the relevant module is imported or executed.
+Restart a Python process after changing eligibility configuration.

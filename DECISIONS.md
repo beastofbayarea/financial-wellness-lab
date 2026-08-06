@@ -60,4 +60,24 @@ Short records of choices made, and the alternatives rejected. Format: context, d
 
 **Why.** The decision layer must not depend on a network call to a third party. If narration is unavailable, the product degrades to a reason code, which is worse UX and identical correctness.
 
-**Consequence.** Two output paths to maintain.
+**Consequence.** Two output paths to maintain. The deterministic fallback is
+covered by tests and is the default behavior when no API key is configured.
+
+---
+
+## D6 — Treat viability and decisiveness as separate results
+
+**Context.** The economically highest-ranked card path can clear every
+walk-away gate while leading the runner-up by too little to support a confident
+choice.
+
+**Decision.** `compare()` reports both a recommended viable path and a separate
+`decisive` flag with a machine-readable reason.
+
+**Why.** Collapsing these into one label would turn a narrow modeled lead into
+false certainty. The distinction preserves the ranking while making the
+pre-declared margin threshold visible.
+
+**Consequence.** Callers must present both fields. In the default scenario,
+Program manager ranks first, but its $0.77M lead is below the $1.50M
+decisiveness threshold.

@@ -14,7 +14,7 @@ Eligibility is decided by deterministic rules. Economics are computed by arithme
 
 | Module                                 | Question it answers                                                                             | Status  |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
-| [`eligibility/`](./eligibility)       | Can this user take an advance, and can we tell them*why* in a sentence they'd accept?         | MVP     |
+| [`eligibility/`](./eligibility)       | Can this user take an advance, and can we tell them *why* in a sentence they'd accept?        | MVP     |
 | [`card_economics/`](./card_economics) | Sponsor bank, program manager, or direct issuance — and what assumption would flip the answer? | MVP     |
 | [`ewa_sim/`](./ewa_sim)               | How does portfolio margin move as advance limits rise?                                          | Planned |
 
@@ -29,12 +29,16 @@ The useful finding is therefore not a recommendation. It is that **the choice is
 ## Quickstart
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/beastofbayarea/financial-wellness-lab.git
 cd financial-wellness-lab
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
-pytest
+python -m pytest
 ```
+
+On Windows PowerShell, activate the environment with
+`.\.venv\Scripts\Activate.ps1` instead.
 
 Run the modules:
 
@@ -45,9 +49,14 @@ python -m card_economics.compare
 
 Both run without an API key. Set `ANTHROPIC_API_KEY` to enable the explanation and memo layers; without it, the modules print the structured output and skip the narration.
 
+The current test suite contains 30 tests covering rule ordering, multi-reason
+diagnostics, narration boundaries and fallbacks, economic thresholds, unit
+economics, and volume sensitivity.
+
 ## See also
 
 - [`DECISIONS.md`](./DECISIONS.md) — choices made and rejected, with reasoning
 - [`LIMITATIONS.md`](./LIMITATIONS.md) — what this is not, and what the numbers are worth
+- [`SETUP.md`](./SETUP.md) — platform-specific installation, commands, and configuration
 
 All data is synthetic. All parameters are illustrative and drawn from public sources.
