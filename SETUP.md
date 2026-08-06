@@ -51,22 +51,35 @@ on its own page. Stop the server with `Ctrl+C`.
 The examples and dashboard work offline and use deterministic fallback text
 when narration is unavailable.
 
-## Optional narration
+## Optional Gemini narration
 
-Set `ANTHROPIC_API_KEY` to allow `shared/narrator.py` to call Anthropic's
-Messages API using the model configured in that module. This is optional: API
-availability never changes an eligibility decision or an economic calculation.
-
-```bash
-export ANTHROPIC_API_KEY="your-key"
-```
+The explanation layer uses the Google Gen AI SDK with Gemini on Vertex AI. Copy
+the checked-in template, then keep the resulting `.env` local:
 
 ```powershell
-$env:ANTHROPIC_API_KEY = "your-key"
+Copy-Item .env.example .env
 ```
 
-Do not commit API keys or local environment files. The code does not load a
-`.env` file automatically.
+```bash
+cp .env.example .env
+```
+
+The Cent-compatible defaults are:
+
+- `GCP_PROJECT_ID=cent-capital`
+- `GCP_REGION=global`
+- `GEMINI_MODEL=gemini-flash-latest`
+- `GEMINI_MAX_TOKENS=8192`
+
+Authentication uses Google Application Default Credentials. For local user
+credentials, use `gcloud auth application-default login`. For a service
+account, set `GOOGLE_APPLICATION_CREDENTIALS` to a JSON key stored outside this
+repository. The project must have Vertex AI access and the authenticated
+identity must be authorized to generate content.
+
+The app loads `.env` automatically. Never commit `.env`, credential JSON, access
+tokens, or private keys. If configuration or authentication is unavailable, the
+LLM call returns no text and the deterministic fallback remains available.
 
 ## Editing assumptions
 

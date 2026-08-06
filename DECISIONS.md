@@ -102,3 +102,23 @@ verify that the overview and both MVP pages render, while domain tests remain
 the source of truth for the calculations. The app pins a light, high-contrast
 theme so operating-system theme detection cannot produce unreadable
 foreground/background combinations.
+
+---
+
+## D8 — Reuse the Cent Vertex AI contract for optional narration
+
+**Context.** The related Cent Capital application standardizes generation on
+Google's Gen AI SDK, Vertex AI, the global region, and the
+`gemini-flash-latest` alias.
+
+**Decision.** Use the Python `google-genai` SDK with the same environment names
+and Application Default Credentials. Do not copy credentials into this repo.
+
+**Why.** A shared provider contract reduces configuration drift while preserving
+each repository's credential boundary. The rolling Flash alias is appropriate
+for short explanation and memo tasks, and the decision engines remain fully
+independent from it.
+
+**Consequence.** Gemini narration requires a configured Google Cloud project,
+Vertex access, and an authorized ADC identity. Missing configuration or any SDK
+failure returns `None`; deterministic fallbacks remain the correctness path.

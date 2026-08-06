@@ -1,9 +1,12 @@
-"""The architectural claim of this repo, asserted as a test.
+"""The architectural claim and Vertex boundary of this repo, asserted as tests.
 
 If the explanation layer can see the inputs, it can construct an outcome.
 These tests fail if that boundary ever erodes.
 """
 
+import json
+
+from shared import narrator
 from shared.narrator import ALLOWED_FIELDS, _scrub
 
 
@@ -27,3 +30,49 @@ def test_allowlist_contains_no_field_that_could_reconstruct_the_decision():
     forbidden = {"user_id", "state", "prior_defaults", "recurring_deposit_count",
                  "has_direct_deposit", "deposit_history_days", "account_frozen"}
     assert ALLOWED_FIELDS.isdisjoint(forbidden)
+
+
+def test_vertex_call_uses_cent_compatible_configuration(monkeypatch):
+    captured = {}
+
+    class FakeModels:
+        def generate_content(self, **kwargs):
+            captured["request"] = kwargs
+            return type("Response", (), {"text": "  Clear explanation.  "})()
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            captured["client"] = kwargs
+            self.models = FakeModels()
+
+    monkeypatch.setenv("GCP_PROJECT_ID", "example-project")
+    monkeypatch.setenv("GCP_REGION", "global")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-flash-latest")
+    monkeypatch.setenv("GEMINI_MAX_TOKENS", "8192")
+    monkeypatch.setattr(narrator.genai, "Client", FakeClient)
+
+    result = narrator.explain_decision(
+        "DEPOSIT_HISTORY_TOO_SHORT",
+        {"days_observed": 31, "state": "CA", "remedy": "Wait 29 days."},
+    )
+
+    assert result == "Clear explanation."
+    assert captured["client"]["vertexai"] is True
+    assert captured["client"]["project"] == "example-project"
+    assert captured["client"]["location"] == "global"
+    assert captured["request"]["model"] == "gemini-flash-latest"
+    assert captured["request"]["config"].max_output_tokens == 200
+    sent = json.loads(captured["request"]["contents"])
+    assert sent["days_observed"] == 31
+    assert "state" not in sent
+
+
+def test_vertex_call_falls_open_when_project_is_missing(monkeypatch):
+    monkeypatch.delenv("GCP_PROJECT_ID", raising=False)
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
+
+    def unexpected_client(**kwargs):
+        raise AssertionError("Client must not be created without a project")
+
+    monkeypatch.setattr(narrator.genai, "Client", unexpected_client)
+    assert narrator.explain_decision("APPROVED", {"limit_cents": 50_000}) is None

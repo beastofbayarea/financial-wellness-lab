@@ -74,7 +74,10 @@ Thresholds live in [`rules_config.yaml`](./rules_config.yaml) and are loaded at 
 
 ### 4. Deterministic narration fallback
 
-When `ANTHROPIC_API_KEY` is not present or API calls fail, narration degrades gracefully to `explain_decision_fallback()` without blocking or altering the decision.
+When Vertex AI configuration, Application Default Credentials, or the API call
+is unavailable, narration degrades gracefully to
+`explain_decision_fallback()` without blocking or altering the decision. The
+dashboard calls Gemini only after the user presses its generation button.
 
 ---
 

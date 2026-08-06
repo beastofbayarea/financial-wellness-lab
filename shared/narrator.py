@@ -1,4 +1,4 @@
-"""Explanation layer.
+"""Optional Vertex AI explanation layer.
 
 The single entry point for language-model calls in this repo.
 
@@ -16,11 +16,18 @@ from __future__ import annotations
 
 import json
 import os
-import urllib.error
-import urllib.request
+from dataclasses import dataclass
 
-API_URL = "https://api.anthropic.com/v1/messages"
-MODEL = "claude-sonnet-4-6"
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
+
+
+load_dotenv()
+
+DEFAULT_LOCATION = "global"
+DEFAULT_MODEL = "gemini-flash-latest"
+DEFAULT_MAX_TOKENS = 8192
 
 # Values that may be interpolated into an explanation. Anything not on this
 # list is dropped before the request is built.
@@ -33,6 +40,39 @@ ALLOWED_FIELDS = {
     "limit_cents",
     "outstanding_cents",
 }
+
+
+@dataclass(frozen=True)
+class LlmConfig:
+    """Non-secret Vertex AI runtime configuration."""
+
+    project: str | None
+    location: str
+    model: str
+    max_tokens: int
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.project)
+
+
+def llm_config() -> LlmConfig:
+    """Read Cent-compatible Vertex settings from the process environment."""
+    raw_max_tokens = os.environ.get("GEMINI_MAX_TOKENS", str(DEFAULT_MAX_TOKENS))
+    try:
+        max_tokens = max(1, int(raw_max_tokens))
+    except ValueError:
+        max_tokens = DEFAULT_MAX_TOKENS
+    return LlmConfig(
+        project=os.environ.get("GCP_PROJECT_ID") or os.environ.get("GOOGLE_CLOUD_PROJECT"),
+        location=(
+            os.environ.get("GCP_REGION")
+            or os.environ.get("GOOGLE_CLOUD_LOCATION")
+            or DEFAULT_LOCATION
+        ),
+        model=os.environ.get("GEMINI_MODEL", DEFAULT_MODEL),
+        max_tokens=max_tokens,
+    )
 
 
 def explain_decision_fallback(reason_code: str, facts: dict) -> str:
@@ -54,36 +94,30 @@ def _scrub(facts: dict) -> dict:
 
 
 def _call(system: str, user: str, max_tokens: int = 400) -> str | None:
-    key = os.environ.get("ANTHROPIC_API_KEY")
-    if not key:
+    """Call Gemini on Vertex AI, returning ``None`` on missing config or failure."""
+    config = llm_config()
+    if not config.configured:
         return None
 
-    payload = json.dumps(
-        {
-            "model": MODEL,
-            "max_tokens": max_tokens,
-            "system": system,
-            "messages": [{"role": "user", "content": user}],
-        }
-    ).encode()
-
-    req = urllib.request.Request(
-        API_URL,
-        data=payload,
-        headers={
-            "content-type": "application/json",
-            "x-api-key": key,
-            "anthropic-version": "2023-06-01",
-        },
-    )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            body = json.loads(resp.read())
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        client = genai.Client(
+            vertexai=True,
+            project=config.project,
+            location=config.location,
+            http_options=types.HttpOptions(api_version="v1", timeout=30_000),
+        )
+        response = client.models.generate_content(
+            model=config.model,
+            contents=user,
+            config=types.GenerateContentConfig(
+                system_instruction=system,
+                max_output_tokens=min(max_tokens, config.max_tokens),
+            ),
+        )
+    except Exception:
         return None
 
-    parts = [b.get("text", "") for b in body.get("content", []) if b.get("type") == "text"]
-    text = "".join(parts).strip()
+    text = (response.text or "").strip()
     return text or None
 
 
@@ -138,5 +172,3 @@ def write_memo_fallback(results: dict) -> str:
     )
     
     return "EXECUTIVE MEMO (Deterministic Fallback)\n" + "\n".join(f"- {b}" for b in bullets) + "\n\n" + key_assumption
-
-

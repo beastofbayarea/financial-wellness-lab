@@ -57,7 +57,10 @@ The dashboard opens a workflow overview with separate pages for the eligibility
 scenario builder and card-economics assumption lab. Both pages call the same
 deterministic functions used by the CLI demos.
 
-Both run without an API key. Set `ANTHROPIC_API_KEY` to enable the explanation and memo layers; without it, the modules print the structured output and skip the narration.
+Both run without cloud credentials. Optional narration uses Gemini on Vertex AI
+with Application Default Credentials; see [`SETUP.md`](./SETUP.md). Without
+Vertex access, the modules preserve the structured result and use deterministic
+fallback text.
 
 The test suite covers rule ordering, multi-reason
 diagnostics, narration boundaries and fallbacks, economic thresholds, unit

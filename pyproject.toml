@@ -3,7 +3,12 @@ name = "financial-wellness-lab"
 version = "0.1.0"
 description = "Where consumer-credit decisions should be deterministic, and where language belongs"
 requires-python = ">=3.10"
-dependencies = ["PyYAML>=6.0.3", "streamlit>=1.61.1"]
+dependencies = [
+    "google-genai>=2.17.0",
+    "python-dotenv>=1.2.2",
+    "PyYAML>=6.0.3",
+    "streamlit>=1.61.1",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=9.1.1"]

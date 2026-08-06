@@ -32,12 +32,13 @@ validate configuration and fail visibly.
 
 ## The narration layer is optional and bounded
 
-Without `ANTHROPIC_API_KEY`, or when the API request fails, deterministic text
-is used. With a key, the external model receives allowlisted eligibility facts
-or already-computed card results. This boundary reduces data exposure and keeps
-models out of decisions, but it does not guarantee that generated wording is
-accurate, appropriate, or compliant. Production narration would require output
-validation, monitoring, and reviewed templates.
+Without valid Vertex AI configuration and Application Default Credentials, or
+when the API request fails, deterministic text is used. With access, Gemini
+receives allowlisted eligibility facts or already-computed card results. This
+boundary reduces data exposure and keeps models out of decisions, but it does
+not guarantee that generated wording is accurate, appropriate, or compliant.
+Production narration would require output validation, monitoring, reviewed
+templates, and credential rotation procedures.
 
 ## The simulation, when it lands, will have a modeling weakness
 

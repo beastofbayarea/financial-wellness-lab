@@ -13,7 +13,13 @@ from card_economics.model import (
     load,
 )
 from eligibility.rules import Applicant, evaluate
-from shared.narrator import explain_decision_fallback, write_memo_fallback
+from shared.narrator import (
+    explain_decision,
+    explain_decision_fallback,
+    llm_config,
+    write_memo,
+    write_memo_fallback,
+)
 
 
 STATES = (
@@ -120,6 +126,19 @@ def render_eligibility() -> None:
         {**decision.facts, "remedy": decision.remedy or ""},
     )
     st.info(f"Plain-language result: {explanation}")
+    if st.button("Generate explanation with Gemini", width="stretch"):
+        with st.spinner("Generating from the already-computed decision…"):
+            generated = explain_decision(
+                decision.reason_code or "DENIED",
+                {**decision.facts, "remedy": decision.remedy or ""},
+            )
+        if generated:
+            st.success(generated)
+        else:
+            st.warning(
+                "Gemini narration is unavailable. The deterministic decision and "
+                "fallback above remain valid; check Vertex AI credentials and access."
+            )
 
     with st.expander("Structured decision output"):
         st.json(
@@ -269,6 +288,16 @@ def render_card_economics() -> None:
 
     with st.expander("Deterministic executive memo"):
         st.text(write_memo_fallback(output))
+    if st.button("Generate executive memo with Gemini", width="stretch"):
+        with st.spinner("Narrating the already-computed comparison…"):
+            generated_memo = write_memo(output)
+        if generated_memo:
+            st.success(generated_memo)
+        else:
+            st.warning(
+                "Gemini narration is unavailable. The deterministic results and memo "
+                "remain valid; check Vertex AI credentials and access."
+            )
     with st.expander("Structured comparison output"):
         st.json(output)
 
@@ -332,6 +361,18 @@ def render_home() -> None:
         "**software makes the decision; language only explains the result.**"
     )
 
+    config = llm_config()
+    with st.container(border=True):
+        status, provider, model = st.columns(3)
+        status.metric("LLM configuration", "Configured" if config.configured else "Fallback only")
+        provider.metric("Optional provider", "Vertex AI")
+        model.metric("Narration model", config.model)
+        st.caption(
+            f"Project: {config.project or 'not set'} · Location: {config.location}. "
+            "Authentication uses Google Application Default Credentials and is checked only "
+            "when you request Gemini narration."
+        )
+
     st.subheader("How the application works")
     st.caption(
         "Both workflows keep user-entered scenarios separate from optional narration. "
@@ -342,7 +383,7 @@ def render_home() -> None:
         ("01 · Enter", "Create a synthetic scenario", "Use a form to change applicant facts or portfolio assumptions. Nothing is persisted."),
         ("02 · Decide", "Run deterministic logic", "Eligibility evaluates ordered rules. Card economics executes fixed formulas and pre-declared gates."),
         ("03 · Inspect", "Review evidence", "See reasons, remedies, financial metrics, exclusions, thresholds, and structured output."),
-        ("04 · Explain", "Translate the result", "The dashboard uses deterministic fallback text. Optional API narration remains downstream of the result."),
+        ("04 · Explain", "Translate the result", "Deterministic text is immediate. An explicit button can ask Gemini to narrate the already-computed result."),
     )
     for column, (number, title, body) in zip(steps, workflow):
         column.markdown(
@@ -363,10 +404,11 @@ def render_home() -> None:
             st.markdown(
                 "**Output:** approval and limit, or reason codes with categorized remedies."
             )
-            st.page_link(
-                "pages/1_Eligibility.py",
-                label="Open Eligibility MVP",
+            st.link_button(
+                "Open Eligibility MVP",
+                "/Eligibility",
                 icon=":material/fact_check:",
+                width="stretch",
             )
     with economics:
         with st.container(border=True):
@@ -379,10 +421,11 @@ def render_home() -> None:
                 "**Output:** viable ranking, decisiveness, exclusions, contribution, "
                 "exposure, break-even points, and crossover sensitivity."
             )
-            st.page_link(
-                "pages/2_Card_Economics.py",
-                label="Open Card Economics MVP",
+            st.link_button(
+                "Open Card Economics MVP",
+                "/Card_Economics",
                 icon=":material/finance_mode:",
+                width="stretch",
             )
 
     st.subheader("Architecture boundaries")

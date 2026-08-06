@@ -106,4 +106,7 @@ The language model operates purely as an explanation layer:
 
 $$\text{Pre-computed Results} \longrightarrow \text{LLM Narrator (\texttt{shared/narrator.py})} \longrightarrow \text{Executive Memo}$$
 
-The model receives structured, pre-calculated figures and never computes financial formulas. When running without an API key, `compare.py` falls back deterministically to `write_memo_fallback()`.
+The Gemini model receives structured, pre-calculated figures and never computes
+financial formulas. When Vertex AI configuration or credentials are
+unavailable, `compare.py` falls back deterministically to
+`write_memo_fallback()`.

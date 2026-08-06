@@ -47,7 +47,7 @@ def test_dashboard_home_explains_workflow_without_exceptions():
     assert not app.exception
     assert app.title[0].value == "Financial Wellness Lab"
     assert any("How the application works" in heading.value for heading in app.subheader)
-    assert len(app.get("page_link")) == 2
+    assert len(app.get("link_button")) == 2
 
 
 def test_each_mvp_has_a_dedicated_page():
