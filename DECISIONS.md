@@ -98,4 +98,5 @@ Python-only and locally runnable.
 
 **Consequence.** Streamlit becomes a runtime dependency. Dashboard smoke tests
 verify that both tabs render, while domain tests remain the source of truth for
-the calculations.
+the calculations. The app pins a light, high-contrast theme so operating-system
+theme detection cannot produce unreadable foreground/background combinations.

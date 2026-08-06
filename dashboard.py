@@ -282,16 +282,36 @@ def main() -> None:
     st.markdown(
         """
         <style>
-        .stApp { background: linear-gradient(145deg, #f7f8f5 0%, #edf3ef 100%); }
+        :root { color-scheme: light; }
+        .stApp {
+            background: linear-gradient(145deg, #f7f8f5 0%, #e9f1eb 100%);
+            color: #17211b;
+        }
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+        .stApp p, .stApp label, .stApp [data-testid="stCaptionContainer"] {
+            color: #17211b;
+        }
         [data-testid="stMetric"] {
-            background: rgba(255, 255, 255, 0.76);
-            border: 1px solid #d7e2db;
+            background: #ffffff;
+            border: 1px solid #c8d5cc;
             border-radius: 14px;
             padding: 1rem;
         }
         [data-testid="stForm"] {
-            background: rgba(255, 255, 255, 0.62);
-            border-color: #d7e2db;
+            background: #ffffff;
+            border-color: #c8d5cc;
+        }
+        [data-baseweb="input"] > div,
+        [data-baseweb="select"] > div {
+            background: #ffffff;
+            color: #17211b;
+        }
+        [data-testid="stFormSubmitButton"] button {
+            color: #ffffff;
+            font-weight: 650;
+        }
+        [data-testid="stAlert"] p {
+            color: inherit;
         }
         </style>
         """,

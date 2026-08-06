@@ -15,6 +15,14 @@ def test_currency_formatter():
     assert usd(-42, 0) == "$-42"
 
 
+def test_dashboard_pins_an_accessible_light_theme():
+    config = (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+
+    assert 'base = "light"' in config
+    assert 'textColor = "#17211B"' in config
+    assert 'backgroundColor = "#F4F7F3"' in config
+
+
 def test_dashboard_assumptions_are_isolated_and_normalized():
     assumptions = build_card_assumptions(
         active_cards=250_000,
