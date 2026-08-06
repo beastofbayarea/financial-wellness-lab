@@ -97,11 +97,11 @@ rule and model functions.
 second implementation of either decision path. Streamlit also keeps the project
 Python-only and locally runnable.
 
-**Consequence.** Streamlit becomes a runtime dependency. Dashboard smoke tests
-verify that the overview and both MVP pages render, while domain tests remain
-the source of truth for the calculations. The app pins a light, high-contrast
-theme so operating-system theme detection cannot produce unreadable
-foreground/background combinations.
+**Consequence.** Streamlit becomes a runtime dependency. Lightweight source
+contract tests verify the routes, theme, and input help without repeatedly
+booting Streamlit; domain tests remain the source of truth for calculations.
+The app pins a light, high-contrast theme so operating-system theme detection
+cannot produce unreadable foreground/background combinations.
 
 ---
 

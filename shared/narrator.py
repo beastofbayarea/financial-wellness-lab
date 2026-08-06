@@ -17,13 +17,17 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
+import google.auth
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
 
-load_dotenv()
+# This repository's ignored .env is its explicit local runtime contract. It must
+# override unrelated variables inherited from another project's terminal.
+load_dotenv(override=True)
 
 DEFAULT_LOCATION = "global"
 DEFAULT_MODEL = "gemini-flash-latest"
@@ -75,6 +79,47 @@ def llm_config() -> LlmConfig:
     )
 
 
+def _local_adc_path() -> Path | None:
+    """Return the standard gcloud ADC file when it exists on this machine."""
+    app_data = os.environ.get("APPDATA")
+    if not app_data:
+        return None
+    candidate = Path(app_data) / "gcloud" / "application_default_credentials.json"
+    return candidate if candidate.is_file() else None
+
+
+def llm_credential_status() -> tuple[bool, str]:
+    """Describe whether a usable local credential source can be resolved."""
+    explicit = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if explicit and Path(explicit).is_file():
+        return True, "Explicit service-account or ADC file"
+    local_adc = _local_adc_path()
+    if local_adc:
+        if explicit:
+            return True, "Local gcloud ADC (stale external credential path ignored)"
+        return True, "Local gcloud Application Default Credentials"
+    if explicit:
+        return False, f"Credential file does not exist on this machine: {explicit}"
+    return False, "No local Application Default Credentials found"
+
+
+def _load_vertex_credentials():
+    """Load credentials while recovering from a stale cross-platform file path."""
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    explicit = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if explicit and Path(explicit).is_file():
+        credentials, _ = google.auth.load_credentials_from_file(explicit, scopes=scopes)
+        return credentials
+    local_adc = _local_adc_path()
+    if local_adc:
+        credentials, _ = google.auth.load_credentials_from_file(
+            str(local_adc), scopes=scopes
+        )
+        return credentials
+    credentials, _ = google.auth.default(scopes=scopes)
+    return credentials
+
+
 def explain_decision_fallback(reason_code: str, facts: dict) -> str:
     """Generate a deterministic fallback explanation without calling an LLM."""
     if reason_code == "APPROVED":
@@ -104,6 +149,7 @@ def _call(system: str, user: str, max_tokens: int = 400) -> str | None:
             vertexai=True,
             project=config.project,
             location=config.location,
+            credentials=_load_vertex_credentials(),
             http_options=types.HttpOptions(api_version="v1", timeout=30_000),
         )
         response = client.models.generate_content(

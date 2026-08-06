@@ -50,6 +50,7 @@ def test_vertex_call_uses_cent_compatible_configuration(monkeypatch):
     monkeypatch.setenv("GEMINI_MODEL", "gemini-flash-latest")
     monkeypatch.setenv("GEMINI_MAX_TOKENS", "8192")
     monkeypatch.setattr(narrator.genai, "Client", FakeClient)
+    monkeypatch.setattr(narrator, "_load_vertex_credentials", lambda: object())
 
     result = narrator.explain_decision(
         "DEPOSIT_HISTORY_TOO_SHORT",
@@ -60,6 +61,7 @@ def test_vertex_call_uses_cent_compatible_configuration(monkeypatch):
     assert captured["client"]["vertexai"] is True
     assert captured["client"]["project"] == "example-project"
     assert captured["client"]["location"] == "global"
+    assert captured["client"]["credentials"] is not None
     assert captured["request"]["model"] == "gemini-flash-latest"
     assert captured["request"]["config"].max_output_tokens == 200
     sent = json.loads(captured["request"]["contents"])
@@ -76,3 +78,33 @@ def test_vertex_call_falls_open_when_project_is_missing(monkeypatch):
 
     monkeypatch.setattr(narrator.genai, "Client", unexpected_client)
     assert narrator.explain_decision("APPROVED", {"limit_cents": 50_000}) is None
+
+
+def test_stale_explicit_credential_path_falls_back_to_local_gcloud_adc(
+    monkeypatch, tmp_path
+):
+    adc = tmp_path / "gcloud" / "application_default_credentials.json"
+    adc.parent.mkdir()
+    adc.write_text("{}", encoding="utf-8")
+    sentinel = object()
+    captured = {}
+
+    def fake_load(path, scopes):
+        captured["path"] = path
+        return sentinel, "example-project"
+
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setenv(
+        "GOOGLE_APPLICATION_CREDENTIALS", "/missing/linux/service-account.json"
+    )
+    monkeypatch.setattr(
+        narrator.google.auth, "load_credentials_from_file", fake_load
+    )
+
+    ready, source = narrator.llm_credential_status()
+    credentials = narrator._load_vertex_credentials()
+
+    assert ready is True
+    assert "stale external credential path ignored" in source
+    assert credentials is sentinel
+    assert captured["path"] == str(adc)

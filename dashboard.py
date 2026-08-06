@@ -17,6 +17,7 @@ from shared.narrator import (
     explain_decision,
     explain_decision_fallback,
     llm_config,
+    llm_credential_status,
     write_memo,
     write_memo_fallback,
 )
@@ -76,24 +77,40 @@ def render_eligibility() -> None:
     with st.form("eligibility_form"):
         left, right = st.columns(2)
         with left:
-            state = st.selectbox("State", STATES, index=STATES.index("CA"))
+            state = st.selectbox(
+                "State", STATES, index=STATES.index("CA"),
+                help="NY and CT trigger STATE_NOT_SERVICED. Other listed states do not fail the jurisdiction rule.",
+            )
             deposit_days = st.number_input(
-                "Deposit history (days)", min_value=0, max_value=3650, value=180
+                "Deposit history (days)", min_value=0, max_value=3650, value=180,
+                help="Values below 60 trigger a denial and a countdown showing how many more connected days are required.",
             )
             deposit_count = st.number_input(
-                "Recurring deposits", min_value=0, max_value=250, value=6
+                "Recurring deposits", min_value=0, max_value=250, value=6,
+                help="Fewer than 2 recurring deposits triggers TOO_FEW_DEPOSITS and reports how many more are needed.",
             )
-            direct_deposit = st.checkbox("Has direct deposit", value=True)
+            direct_deposit = st.checkbox(
+                "Has direct deposit", value=True,
+                help="Does not decide eligibility. It raises an approved limit from $250 to $500.",
+            )
         with right:
             outstanding_dollars = st.number_input(
                 "Outstanding advance", min_value=0.0, max_value=100_000.0,
                 value=0.0, step=25.0, format="%.2f",
+                help="Any amount above $0 triggers OUTSTANDING_ADVANCE. The remedy uses this amount as the balance to repay.",
             )
             prior_defaults = st.number_input(
-                "Prior defaults", min_value=0, max_value=100, value=0
+                "Prior defaults", min_value=0, max_value=100, value=0,
+                help="Two or more prior defaults triggers PRIOR_DEFAULTS and a 90-day reapplication remedy.",
             )
-            account_frozen = st.checkbox("Account frozen")
-            collect_all = st.checkbox("Show every triggered rule", value=True)
+            account_frozen = st.checkbox(
+                "Account frozen",
+                help="Triggers ACCOUNT_FROZEN, the highest-priority denial, with a support-intervention remedy.",
+            )
+            collect_all = st.checkbox(
+                "Show every triggered rule", value=True,
+                help="When enabled, returns every failing rule in priority order. When disabled, evaluation stops at the first failure.",
+            )
         st.form_submit_button("Evaluate applicant", type="primary", width="stretch")
 
     applicant = Applicant(
@@ -177,25 +194,30 @@ def render_card_economics() -> None:
             active_cards = st.number_input(
                 "Active cards", min_value=1, max_value=10_000_000,
                 value=int(portfolio["active_cards"]), step=10_000,
+                help="Scales annual spend, interchange, revolving balances, contribution, and receivable exposure. Fixed costs do not scale with this input.",
             )
             monthly_spend = st.number_input(
                 "Monthly spend per card", min_value=1.0, max_value=10_000.0,
                 value=float(portfolio["monthly_spend_per_card_usd"]), step=25.0,
+                help="Raises annual interchange for every path. Higher spend can move paths above the contribution floor and change their ranking.",
             )
         with economics:
             st.markdown("**Economics**")
             average_balance = st.number_input(
                 "Average revolving balance", min_value=0.0, max_value=25_000.0,
                 value=float(portfolio["avg_revolving_balance_usd"]), step=25.0,
+                help="Changes interest revenue, credit losses, and receivable exposure for direct issuance. Partner paths do not own the receivable.",
             )
             revolve_rate_pct = st.slider(
                 "Accounts revolving", min_value=0.0, max_value=100.0,
                 value=float(portfolio["revolve_rate"] * 100), step=1.0,
                 format="%.0f%%",
+                help="Sets the share of accounts carrying balances. It affects direct-issuance interest, losses, exposure, and return on capital.",
             )
             interchange_rate_pct = st.number_input(
                 "Net interchange rate (%)", min_value=0.0, max_value=10.0,
                 value=float(revenue["interchange_rate"] * 100), step=0.05,
+                help="Multiplies annual card spend into interchange revenue. Partner fees also rise because they are a share of interchange.",
             )
         with gates:
             st.markdown("**Walk-away gates**")
@@ -204,15 +226,18 @@ def render_card_economics() -> None:
                 max_value=100_000_000.0,
                 value=float(thresholds["min_annual_contribution_usd"]),
                 step=250_000.0,
+                help="Excludes any path whose computed annual contribution falls below this pre-declared walk-away floor.",
             )
             max_months = st.number_input(
                 "Maximum months to launch", min_value=1, max_value=120,
                 value=int(thresholds["max_months_to_first_customer"]),
+                help="Excludes paths that take longer to reach a first customer. Direct issuance defaults to 30 months.",
             )
             decisive_margin = st.number_input(
                 "Decisive margin", min_value=0.0, max_value=100_000_000.0,
                 value=float(thresholds["min_margin_advantage_over_next_best_usd"]),
                 step=250_000.0,
+                help="Controls confidence, not viability. The leading viable path is marked decisive only when its lead meets this amount.",
             )
         st.form_submit_button("Run comparison", type="primary", width="stretch")
 
@@ -346,6 +371,10 @@ def apply_dashboard_styles() -> None:
             color: #ffffff;
             font-weight: 650;
         }
+        [data-testid="stFormSubmitButton"] button p,
+        button[kind="primary"] p {
+            color: #ffffff !important;
+        }
         [data-testid="stAlert"] p { color: inherit; }
         </style>
         """,
@@ -362,15 +391,18 @@ def render_home() -> None:
     )
 
     config = llm_config()
+    credentials_ready, credential_source = llm_credential_status()
     with st.container(border=True):
         status, provider, model = st.columns(3)
-        status.metric("LLM configuration", "Configured" if config.configured else "Fallback only")
+        status.metric(
+            "LLM readiness",
+            "Ready" if config.configured and credentials_ready else "Fallback only",
+        )
         provider.metric("Optional provider", "Vertex AI")
         model.metric("Narration model", config.model)
         st.caption(
-            f"Project: {config.project or 'not set'} · Location: {config.location}. "
-            "Authentication uses Google Application Default Credentials and is checked only "
-            "when you request Gemini narration."
+            f"Project: {config.project or 'not set'} · Location: {config.location} · "
+            f"Credentials: {credential_source}."
         )
 
     st.subheader("How the application works")

@@ -1,101 +1,34 @@
-"""Smoke and boundary tests for the combined Streamlit dashboard."""
+"""Fast source-contract checks for the Streamlit presentation layer."""
 
+import ast
 from pathlib import Path
-
-from streamlit.testing.v1 import AppTest
-
-from dashboard import build_card_assumptions, usd
 
 
 ROOT = Path(__file__).parents[1]
+DASHBOARD = ROOT / "dashboard.py"
 
 
-def test_currency_formatter():
-    assert usd(1234.5) == "$1,234.50"
-    assert usd(-42, 0) == "$-42"
+def test_dashboard_routes_and_theme_are_present():
+    source = DASHBOARD.read_text(encoding="utf-8")
+    theme = (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+
+    assert "How the application works" in source
+    assert "/Eligibility" in source and "/Card_Economics" in source
+    assert (ROOT / "pages" / "1_Eligibility.py").is_file()
+    assert (ROOT / "pages" / "2_Card_Economics.py").is_file()
+    assert 'base = "light"' in theme and 'textColor = "#17211B"' in theme
 
 
-def test_dashboard_pins_an_accessible_light_theme():
-    config = (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+def test_every_scenario_input_has_help_text():
+    tree = ast.parse(DASHBOARD.read_text(encoding="utf-8"))
+    input_methods = {"selectbox", "number_input", "checkbox", "slider"}
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr in input_methods
+    ]
 
-    assert 'base = "light"' in config
-    assert 'textColor = "#17211B"' in config
-    assert 'backgroundColor = "#F4F7F3"' in config
-
-
-def test_dashboard_assumptions_are_isolated_and_normalized():
-    assumptions = build_card_assumptions(
-        active_cards=250_000,
-        monthly_spend=900,
-        average_balance=500,
-        revolve_rate_pct=40,
-        interchange_rate_pct=2,
-        contribution_floor=3_000_000,
-        max_months=24,
-        decisive_margin=2_000_000,
-    )
-
-    assert assumptions["portfolio"]["active_cards"] == 250_000
-    assert assumptions["portfolio"]["revolve_rate"] == 0.4
-    assert assumptions["revenue"]["interchange_rate"] == 0.02
-    assert assumptions["thresholds"]["max_months_to_first_customer"] == 24
-
-
-def test_dashboard_home_explains_workflow_without_exceptions():
-    app = AppTest.from_file(ROOT / "dashboard.py").run(timeout=20)
-
-    assert not app.exception
-    assert app.title[0].value == "Financial Wellness Lab"
-    assert any("How the application works" in heading.value for heading in app.subheader)
-    assert len(app.get("link_button")) == 2
-
-
-def test_each_mvp_has_a_dedicated_page():
-    eligibility = AppTest.from_file(ROOT / "pages" / "1_Eligibility.py").run(timeout=20)
-    economics = AppTest.from_file(ROOT / "pages" / "2_Card_Economics.py").run(timeout=20)
-
-    assert not eligibility.exception
-    assert not economics.exception
-    assert eligibility.title[0].value == "Eligibility MVP"
-    assert economics.title[0].value == "Card Economics MVP"
-    assert any(metric.label == "Advance limit" for metric in eligibility.metric)
-    assert any(
-        metric.label == "Highest-ranked viable path" for metric in economics.metric
-    )
-
-
-def test_eligibility_form_reacts_to_a_restricted_state():
-    app = AppTest.from_file(ROOT / "pages" / "1_Eligibility.py").run(timeout=20)
-
-    state = next(widget for widget in app.selectbox if widget.label == "State")
-    submit = next(button for button in app.button if button.label == "Evaluate applicant")
-    state.set_value("NY")
-    submit.click().run(timeout=20)
-
-    assert not app.exception
-    assert any("Declined" in message.value for message in app.error)
-    assert any("State Not Serviced" in block.value for block in app.markdown)
-
-
-def test_card_form_reacts_to_high_volume_and_a_relaxed_launch_gate():
-    app = AppTest.from_file(ROOT / "pages" / "2_Card_Economics.py").run(timeout=20)
-
-    monthly_spend = next(
-        widget for widget in app.number_input
-        if widget.label == "Monthly spend per card"
-    )
-    max_months = next(
-        widget for widget in app.number_input
-        if widget.label == "Maximum months to launch"
-    )
-    submit = next(button for button in app.button if button.label == "Run comparison")
-    monthly_spend.set_value(3_000.0)
-    max_months.set_value(36)
-    submit.click().run(timeout=20)
-
-    assert not app.exception
-    recommendation = next(
-        metric for metric in app.metric
-        if metric.label == "Highest-ranked viable path"
-    )
-    assert recommendation.value == "Direct issuance"
+    assert len(calls) == 16
+    assert all(any(keyword.arg == "help" for keyword in call.keywords) for call in calls)

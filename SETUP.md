@@ -66,7 +66,7 @@ cp .env.example .env
 
 The Cent-compatible defaults are:
 
-- `GCP_PROJECT_ID=cent-capital`
+- `GCP_PROJECT_ID=cent-capital-472820`
 - `GCP_REGION=global`
 - `GEMINI_MODEL=gemini-flash-latest`
 - `GEMINI_MAX_TOKENS=8192`
@@ -77,9 +77,15 @@ account, set `GOOGLE_APPLICATION_CREDENTIALS` to a JSON key stored outside this
 repository. The project must have Vertex AI access and the authenticated
 identity must be authorized to generate content.
 
-The app loads `.env` automatically. Never commit `.env`, credential JSON, access
-tokens, or private keys. If configuration or authentication is unavailable, the
-LLM call returns no text and the deterministic fallback remains available.
+If a deployment-only credential path is inherited on another operating system
+and the file does not exist, the app safely uses the standard local gcloud ADC
+file instead. It never reads or copies credentials into the repository.
+
+The app loads `.env` automatically and gives its values precedence over settings
+inherited from another project's terminal. Never commit `.env`, credential JSON,
+access tokens, or private keys. If configuration or authentication is
+unavailable, the LLM call returns no text and the deterministic fallback remains
+available.
 
 ## Editing assumptions
 
