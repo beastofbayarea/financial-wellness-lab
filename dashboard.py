@@ -273,12 +273,8 @@ def render_card_economics() -> None:
         st.json(output)
 
 
-def main() -> None:
-    st.set_page_config(
-        page_title="Financial Wellness Lab",
-        page_icon="⚖️",
-        layout="wide",
-    )
+def apply_dashboard_styles() -> None:
+    """Apply the shared high-contrast visual treatment to every dashboard page."""
     st.markdown(
         """
         <style>
@@ -291,11 +287,22 @@ def main() -> None:
         .stApp p, .stApp label, .stApp [data-testid="stCaptionContainer"] {
             color: #17211b;
         }
-        [data-testid="stMetric"] {
+        [data-testid="stMetric"], .workflow-card {
             background: #ffffff;
             border: 1px solid #c8d5cc;
             border-radius: 14px;
             padding: 1rem;
+        }
+        .workflow-card {
+            min-height: 185px;
+            margin-bottom: 0.75rem;
+        }
+        .workflow-step {
+            color: #8f2f29;
+            font-size: 0.78rem;
+            font-weight: 750;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
         [data-testid="stForm"] {
             background: #ffffff;
@@ -310,25 +317,122 @@ def main() -> None:
             color: #ffffff;
             font-weight: 650;
         }
-        [data-testid="stAlert"] p {
-            color: inherit;
-        }
+        [data-testid="stAlert"] p { color: inherit; }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_home() -> None:
+    """Explain the application workflow and link to each independent MVP page."""
     st.title("Financial Wellness Lab")
     st.markdown(
-        "Test both shipped MVPs from one place. Decisions and calculations stay "
-        "deterministic; the dashboard only collects scenarios and presents results."
+        "Two deterministic product experiments with one shared principle: "
+        "**software makes the decision; language only explains the result.**"
     )
-    eligibility_tab, economics_tab = st.tabs(["Eligibility", "Card economics"])
-    with eligibility_tab:
-        render_eligibility()
-    with economics_tab:
-        render_card_economics()
+
+    st.subheader("How the application works")
+    st.caption(
+        "Both workflows keep user-entered scenarios separate from optional narration. "
+        "No language model approves an advance or calculates card economics."
+    )
+    steps = st.columns(4)
+    workflow = (
+        ("01 · Enter", "Create a synthetic scenario", "Use a form to change applicant facts or portfolio assumptions. Nothing is persisted."),
+        ("02 · Decide", "Run deterministic logic", "Eligibility evaluates ordered rules. Card economics executes fixed formulas and pre-declared gates."),
+        ("03 · Inspect", "Review evidence", "See reasons, remedies, financial metrics, exclusions, thresholds, and structured output."),
+        ("04 · Explain", "Translate the result", "The dashboard uses deterministic fallback text. Optional API narration remains downstream of the result."),
+    )
+    for column, (number, title, body) in zip(steps, workflow):
+        column.markdown(
+            f'<div class="workflow-card"><div class="workflow-step">{number}</div>'
+            f'<h4>{title}</h4><p>{body}</p></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.subheader("Choose an MVP")
+    eligibility, economics = st.columns(2)
+    with eligibility:
+        with st.container(border=True):
+            st.markdown("### Advance eligibility")
+            st.write(
+                "Test approval limits and ordered denial rules using state, deposit "
+                "history, outstanding advances, defaults, and account status."
+            )
+            st.markdown(
+                "**Output:** approval and limit, or reason codes with categorized remedies."
+            )
+            st.page_link(
+                "pages/1_Eligibility.py",
+                label="Open Eligibility MVP",
+                icon=":material/fact_check:",
+            )
+    with economics:
+        with st.container(border=True):
+            st.markdown("### Card economics")
+            st.write(
+                "Compare sponsor-bank, program-manager, and direct-issuance paths "
+                "while changing portfolio economics and walk-away gates."
+            )
+            st.markdown(
+                "**Output:** viable ranking, decisiveness, exclusions, contribution, "
+                "exposure, break-even points, and crossover sensitivity."
+            )
+            st.page_link(
+                "pages/2_Card_Economics.py",
+                label="Open Card Economics MVP",
+                icon=":material/finance_mode:",
+            )
+
+    st.subheader("Architecture boundaries")
+    boundary_rows = [
+        {
+            "Layer": "Scenario input",
+            "Eligibility": "Synthetic applicant facts",
+            "Card economics": "Portfolio and gate assumptions",
+        },
+        {
+            "Layer": "Decision engine",
+            "Eligibility": "Ordered pure rules",
+            "Card economics": "Arithmetic formulas and thresholds",
+        },
+        {
+            "Layer": "Evidence",
+            "Eligibility": "Reason codes, remedies, allowlisted facts",
+            "Card economics": "Computed metrics and failed gates",
+        },
+        {
+            "Layer": "Explanation",
+            "Eligibility": "Plain-language deterministic fallback",
+            "Card economics": "Deterministic executive memo",
+        },
+    ]
+    st.dataframe(boundary_rows, hide_index=True, width="stretch")
+
+    with st.expander("What this lab does not do"):
+        st.markdown(
+            "- It does not use real customer data or persist form submissions.\n"
+            "- It does not provide lending, compliance, legal, or investment advice.\n"
+            "- It does not let a language model change a decision or calculation.\n"
+            "- It does not implement the planned EWA portfolio simulator."
+        )
+
+
+def render_footer() -> None:
     st.divider()
     st.caption("Illustrative, synthetic scenarios only — not lending, legal, or investment advice.")
+
+
+def main() -> None:
+    st.set_page_config(
+        page_title="Financial Wellness Lab",
+        page_icon="⚖️",
+        layout="wide",
+    )
+    apply_dashboard_styles()
+    render_home()
+    render_footer()
 
 
 if __name__ == "__main__":

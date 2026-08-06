@@ -41,18 +41,31 @@ def test_dashboard_assumptions_are_isolated_and_normalized():
     assert assumptions["thresholds"]["max_months_to_first_customer"] == 24
 
 
-def test_dashboard_renders_both_mvp_sections_without_exceptions():
+def test_dashboard_home_explains_workflow_without_exceptions():
     app = AppTest.from_file(ROOT / "dashboard.py").run(timeout=20)
 
     assert not app.exception
     assert app.title[0].value == "Financial Wellness Lab"
-    assert [tab.label for tab in app.tabs] == ["Eligibility", "Card economics"]
-    assert any(metric.label == "Advance limit" for metric in app.metric)
-    assert any(metric.label == "Highest-ranked viable path" for metric in app.metric)
+    assert any("How the application works" in heading.value for heading in app.subheader)
+    assert len(app.get("page_link")) == 2
+
+
+def test_each_mvp_has_a_dedicated_page():
+    eligibility = AppTest.from_file(ROOT / "pages" / "1_Eligibility.py").run(timeout=20)
+    economics = AppTest.from_file(ROOT / "pages" / "2_Card_Economics.py").run(timeout=20)
+
+    assert not eligibility.exception
+    assert not economics.exception
+    assert eligibility.title[0].value == "Eligibility MVP"
+    assert economics.title[0].value == "Card Economics MVP"
+    assert any(metric.label == "Advance limit" for metric in eligibility.metric)
+    assert any(
+        metric.label == "Highest-ranked viable path" for metric in economics.metric
+    )
 
 
 def test_eligibility_form_reacts_to_a_restricted_state():
-    app = AppTest.from_file(ROOT / "dashboard.py").run(timeout=20)
+    app = AppTest.from_file(ROOT / "pages" / "1_Eligibility.py").run(timeout=20)
 
     state = next(widget for widget in app.selectbox if widget.label == "State")
     submit = next(button for button in app.button if button.label == "Evaluate applicant")
@@ -65,7 +78,7 @@ def test_eligibility_form_reacts_to_a_restricted_state():
 
 
 def test_card_form_reacts_to_high_volume_and_a_relaxed_launch_gate():
-    app = AppTest.from_file(ROOT / "dashboard.py").run(timeout=20)
+    app = AppTest.from_file(ROOT / "pages" / "2_Card_Economics.py").run(timeout=20)
 
     monthly_spend = next(
         widget for widget in app.number_input

@@ -45,7 +45,8 @@ streamlit run dashboard.py
 ```
 
 Streamlit prints the local address (normally `http://localhost:8501`) and opens
-it in the default browser. Stop the server with `Ctrl+C`.
+it in the default browser. Use the sidebar or home-page cards to open each MVP
+on its own page. Stop the server with `Ctrl+C`.
 
 The examples and dashboard work offline and use deterministic fallback text
 when narration is unavailable.

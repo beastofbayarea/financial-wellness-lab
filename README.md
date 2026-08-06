@@ -53,8 +53,9 @@ Or explore both MVPs in the local dashboard:
 streamlit run dashboard.py
 ```
 
-The dashboard opens an eligibility scenario builder and a card-economics
-assumption lab. It calls the same deterministic functions used by the CLI demos.
+The dashboard opens a workflow overview with separate pages for the eligibility
+scenario builder and card-economics assumption lab. Both pages call the same
+deterministic functions used by the CLI demos.
 
 Both run without an API key. Set `ANTHROPIC_API_KEY` to enable the explanation and memo layers; without it, the modules print the structured output and skip the narration.
 
