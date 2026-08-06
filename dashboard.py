@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import altair as alt
 import streamlit as st
 
 from card_economics.model import (
@@ -29,10 +30,21 @@ STATES = (
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
 )
 
+CRITERION_LABELS = {
+    "min_annual_contribution_usd": "Annual contribution is below the required minimum",
+    "max_months_to_first_customer": "Launch would take longer than the allowed timeline",
+    "max_annual_loss_rate": "Expected annual credit losses exceed the risk limit",
+}
+
 
 def usd(value: float, decimals: int = 2) -> str:
     """Format a numeric value as US dollars."""
     return f"${value:,.{decimals}f}"
+
+
+def plain_criteria(failed: list[str] | tuple[str, ...]) -> str:
+    """Translate internal criterion identifiers into executive-facing language."""
+    return "; ".join(CRITERION_LABELS.get(item, "Does not meet an investment criterion") for item in failed)
 
 
 def build_card_assumptions(
@@ -197,30 +209,30 @@ def render_card_economics() -> None:
             active_cards = st.number_input(
                 "Active cards", min_value=1, max_value=10_000_000,
                 value=int(portfolio["active_cards"]), step=10_000,
-                help="Scales annual spend, interchange, revolving balances, contribution, and receivable exposure. Fixed costs do not scale with this input.",
+                help="The number of cards expected to be actively used. More active cards increase purchase volume and interchange revenue, but also increase revolving balances and credit exposure. Fixed operating costs stay unchanged, so larger portfolios usually improve contribution per program.",
             )
             monthly_spend = st.number_input(
                 "Monthly spend per card", min_value=1.0, max_value=10_000.0,
                 value=float(portfolio["monthly_spend_per_card_usd"]), step=25.0,
-                help="Raises annual interchange for every path. Higher spend can move paths above the contribution floor and change their ranking.",
+                help="The average amount one active cardholder spends each month. Higher spend produces more interchange revenue for every strategy and can help a strategy clear the minimum annual contribution requirement. It is the most important volume sensitivity in this comparison.",
             )
         with economics:
             st.markdown("**Economics**")
             average_balance = st.number_input(
                 "Average revolving balance", min_value=0.0, max_value=25_000.0,
                 value=float(portfolio["avg_revolving_balance_usd"]), step=25.0,
-                help="Changes interest revenue, credit losses, and receivable exposure for direct issuance. Partner paths do not own the receivable.",
+                help="The typical unpaid balance among customers who carry debt from one month to the next. For direct issuance, a larger balance increases interest income, expected credit losses, and the receivables held on the balance sheet. Partner-led strategies do not hold these receivables in this model.",
             )
             revolve_rate_pct = st.slider(
                 "Accounts revolving", min_value=0.0, max_value=100.0,
                 value=float(portfolio["revolve_rate"] * 100), step=1.0,
                 format="%.0f%%",
-                help="Sets the share of accounts carrying balances. It affects direct-issuance interest, losses, exposure, and return on capital.",
+                help="The percentage of active cardholders who do not pay their full statement balance each month. A higher percentage increases interest income for direct issuance, but also increases expected losses and balance-sheet exposure. It does not create interest income for the partner-led strategies.",
             )
             interchange_rate_pct = st.number_input(
                 "Net interchange rate (%)", min_value=0.0, max_value=10.0,
                 value=float(revenue["interchange_rate"] * 100), step=0.05,
-                help="Multiplies annual card spend into interchange revenue. Partner fees also rise because they are a share of interchange.",
+                help="The share of purchase volume retained as interchange after network costs. A higher rate increases revenue for every strategy. Partner fees also increase because they are calculated as a share of interchange revenue.",
             )
         with gates:
             st.markdown("**Investment criteria**")
@@ -229,20 +241,20 @@ def render_card_economics() -> None:
                 max_value=100_000_000.0,
                 value=float(thresholds["min_annual_contribution_usd"]),
                 step=250_000.0,
-                help="Excludes any path whose computed annual contribution falls below this pre-declared walk-away floor.",
+                help="The lowest annual profit contribution management is willing to accept. A strategy below this amount is removed from consideration even if it performs better on speed or strategic control. Raising the minimum makes the screen more selective.",
             )
             max_months = st.number_input(
                 "Maximum months to launch", min_value=1, max_value=120,
                 value=int(thresholds["max_months_to_first_customer"]),
-                help="Excludes paths that take longer to reach a first customer. Direct issuance defaults to 30 months.",
+                help="The longest acceptable time before the first customer can use the card. A strategy taking longer is removed from consideration. A tighter timeline favors partner-led launches; a longer timeline may allow direct issuance to remain in the comparison.",
             )
             decisive_margin = st.number_input(
                 "Decisive margin", min_value=0.0, max_value=100_000_000.0,
                 value=float(thresholds["min_margin_advantage_over_next_best_usd"]),
                 step=250_000.0,
-                help="Controls confidence, not viability. The leading viable path is marked decisive only when its lead meets this amount.",
+                help="The minimum annual contribution advantage required to call the financial result conclusive. This does not remove a strategy from consideration. It determines whether the leading option is strong enough to decide on economics alone or needs further strategic review.",
             )
-        st.form_submit_button("Evaluate strategies", type="primary", width="stretch")
+        st.form_submit_button("Update analysis", type="primary", width="stretch")
 
     assumptions = build_card_assumptions(
         active_cards=int(active_cards),
@@ -256,7 +268,20 @@ def render_card_economics() -> None:
     )
     output = compare(assumptions)
 
-    st.markdown("### Recommendation")
+    if output["recommended"] is None:
+        takeaway = "No strategy meets the current investment criteria"
+    elif output["decisive"]:
+        takeaway = f"{output['recommended']} leads with a decision-ready economic advantage"
+    else:
+        takeaway = f"{output['recommended']} leads, but economics alone do not settle the decision"
+
+    st.markdown('<div class="section-kicker">Executive takeaway</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="takeaway-headline">{takeaway}</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="takeaway-subtitle">The recommendation applies the stated '
+        'contribution, launch-time, loss-rate, and confidence criteria.</div>',
+        unsafe_allow_html=True,
+    )
     winner, margin, confidence = st.columns(3)
     winner.metric("Leading strategy", output["recommended"] or "No viable option")
     margin.metric(
@@ -267,56 +292,92 @@ def render_card_economics() -> None:
     confidence.metric("Confidence", "Decisive" if output["decisive"] else "Further review")
 
     if output["recommended"] is None:
-        st.error("No strategy meets all investment criteria. Adjust the assumptions or review the excluded options.")
+        decision_note = "Adjust the assumptions or review which investment criterion is most flexible."
     elif output["decisive"]:
-        st.success(f"{output['recommended']} leads the viable strategies by a decisive margin.")
+        decision_note = "The modeled advantage clears the confidence threshold; economics support moving forward."
     else:
-        st.warning(
-            f"{output['recommended']} leads, but the advantage is below the confidence threshold. Review strategic factors before committing."
-        )
+        decision_note = "The lead is below the confidence threshold; use operating control, partner capability, and execution risk to break the tie."
+    st.markdown(f'<div class="decision-note">{decision_note}</div>', unsafe_allow_html=True)
 
-    st.markdown("#### Strategy comparison")
+    st.markdown('<div class="section-kicker">Comparative economics</div>', unsafe_allow_html=True)
+    excluded_count = len(output["excluded"])
+    if output["recommended"] is None:
+        comparison_headline = "No strategy clears all investment criteria"
+    elif excluded_count == 1:
+        comparison_headline = f"{output['recommended']} leads; one strategy does not meet all criteria"
+    elif excluded_count > 1:
+        comparison_headline = f"{output['recommended']} leads; {excluded_count} strategies do not meet all criteria"
+    else:
+        comparison_headline = f"{output['recommended']} leads annual contribution"
+    st.markdown(f"### {comparison_headline}")
 
     rows = [
         {
-            "Path": result["label"],
+            "Strategy": result["label"],
             "Annual contribution": result["annual_contribution_usd"],
-            "Contribution / card": result["annual_contribution_per_card_usd"],
-            "Receivable exposure": result["balance_sheet_exposure_usd"],
-            "Launch (months)": result["months_to_first_customer"],
-            "Status": "Viable" if not result["failed_thresholds"] else "Excluded",
-            "Failed gates": ", ".join(result["failed_thresholds"]) or "—",
+            "Per active card": result["annual_contribution_per_card_usd"],
+            "Receivables held": result["balance_sheet_exposure_usd"],
+            "Time to launch": result["months_to_first_customer"],
+            "Assessment": "Meets all criteria" if not result["failed_thresholds"] else "Does not meet criteria",
+            "Reason": plain_criteria(result["failed_thresholds"]) or "No concerns under the current assumptions",
         }
         for result in output["results"]
     ]
     st.dataframe(
         rows,
         column_config={
-            "Annual contribution": st.column_config.NumberColumn(format="dollar"),
-            "Contribution / card": st.column_config.NumberColumn(format="dollar"),
-            "Receivable exposure": st.column_config.NumberColumn(format="dollar"),
+            "Strategy": st.column_config.TextColumn(help="The operating model used to issue and manage the card program."),
+            "Annual contribution": st.column_config.NumberColumn(format="dollar", help="Annual revenue less partner fees, expected credit losses, fixed operating costs, and compliance staffing."),
+            "Per active card": st.column_config.NumberColumn(format="dollar", help="Annual contribution divided by active cards, making strategies comparable on a per-customer basis."),
+            "Receivables held": st.column_config.NumberColumn(format="dollar", help="Revolving customer balances held on the program's balance sheet. This is exposure, not required regulatory capital."),
+            "Time to launch": st.column_config.NumberColumn(format="%d months", help="Estimated time until the first customer can use the program."),
+            "Assessment": st.column_config.TextColumn(help="Whether the strategy satisfies every stated investment criterion."),
+            "Reason": st.column_config.TextColumn(help="Why a strategy was removed from consideration, or confirmation that it cleared the screen."),
         },
         hide_index=True,
         width="stretch",
     )
-    st.bar_chart(rows, x="Path", y="Annual contribution", color="Status")
+    chart_rows = [
+        {
+            "Strategy": result["label"],
+            "Annual contribution": result["annual_contribution_usd"],
+            "Highlight": "Recommended" if result["label"] == output["recommended"] else "Other",
+        }
+        for result in output["results"]
+    ]
+    chart = (
+        alt.Chart(alt.Data(values=chart_rows))
+        .mark_bar(cornerRadiusEnd=3, size=28)
+        .encode(
+            y=alt.Y("Strategy:N", sort="-x", title=None),
+            x=alt.X("Annual contribution:Q", title="Annual contribution", axis=alt.Axis(format="$,.0s", grid=True, gridColor="#E8ECEF")),
+            color=alt.condition(alt.datum.Highlight == "Recommended", alt.value("#174A73"), alt.value("#AAB7C2")),
+            tooltip=[alt.Tooltip("Strategy:N"), alt.Tooltip("Annual contribution:Q", format="$,.0f")],
+        )
+        .properties(height=190)
+    )
+    st.altair_chart(chart, width="stretch")
+    st.caption("Annual contribution reflects the current scenario and is shown before tax. Navy identifies the recommended strategy.")
 
-    st.markdown("#### Volume sensitivity")
+    st.markdown('<div class="section-kicker">What needs to be true</div>', unsafe_allow_html=True)
+    st.markdown("### Monthly spend required to meet the contribution minimum")
     milestone_columns = st.columns(len(assumptions["paths"]))
     for column, key in zip(milestone_columns, assumptions["paths"]):
         point = break_even_spend(key, assumptions)
         column.metric(
             assumptions["paths"][key]["label"],
             usd(point, 0) + "/mo" if point is not None else "Not reached",
-            help="Monthly spend per card needed to clear the contribution floor.",
+            help=f"The average monthly card spend needed for {assumptions['paths'][key]['label']} to reach management's minimum annual contribution. A lower amount means the strategy can succeed at a smaller customer-spend level.",
         )
     crossover = find_crossover_spend("direct_issuance", "program_manager", assumptions)
     if crossover is not None:
         st.info(
-            f"Direct issuance and Program manager have equal contribution at approximately "
-            f"{usd(crossover, 0)} monthly spend per card."
+            f"At approximately {usd(crossover, 0)} in monthly spend per active card, "
+            "Direct issuance and Program manager produce the same annual contribution. "
+            "Above that point, Direct issuance contributes more, assuming every other input stays unchanged."
         )
 
+    st.markdown('<div class="section-kicker">Recommendation</div>', unsafe_allow_html=True)
     st.markdown("### Executive summary")
     with st.container(border=True):
         st.markdown(write_memo_fallback(output))
@@ -331,8 +392,22 @@ def render_card_economics() -> None:
                 "AI-assisted wording is temporarily unavailable. The calculated "
                 "recommendation and summary above are unchanged."
             )
-    with st.expander("Model audit details"):
-        st.json(output)
+    with st.expander("How the recommendation is calculated"):
+        st.markdown(
+            "**Annual contribution** combines interchange and interest revenue, then subtracts "
+            "partner fees, expected credit losses, fixed operating costs, and compliance staffing."
+        )
+        st.markdown("**Investment criteria used in this analysis**")
+        st.markdown(
+            f"- At least **{usd(contribution_floor, 0)}** in annual contribution\n"
+            f"- First customer live within **{max_months} months**\n"
+            f"- Expected annual credit losses no higher than **{thresholds['max_annual_loss_rate']:.1%}**\n"
+            f"- A lead of at least **{usd(decisive_margin, 0)}** before economics alone are considered conclusive"
+        )
+        st.caption(
+            "A strategy must pass the first three criteria to be considered. The final criterion "
+            "indicates confidence in the recommendation; it does not remove a strategy."
+        )
 
 
 def apply_dashboard_styles() -> None:
@@ -342,18 +417,35 @@ def apply_dashboard_styles() -> None:
         <style>
         :root { color-scheme: light; }
         .stApp {
-            background: #f5f7f5;
-            color: #17211b;
+            background: #ffffff;
+            color: #162432;
         }
         .block-container { max-width: 1280px; padding-top: 2.5rem; padding-bottom: 3rem; }
         .stApp h1, .stApp h2, .stApp h3, .stApp h4,
         .stApp p, .stApp label, .stApp [data-testid="stCaptionContainer"] {
-            color: #17211b;
+            color: #162432;
+        }
+        .section-kicker {
+            color: #486276; font-size: 0.72rem; font-weight: 750;
+            letter-spacing: 0.13em; text-transform: uppercase;
+            margin-top: 2.1rem; margin-bottom: 0.35rem;
+        }
+        .takeaway-headline {
+            color: #0b1f33; font-size: 2.05rem; font-weight: 720;
+            line-height: 1.17; max-width: 920px; margin-bottom: 0.45rem;
+        }
+        .takeaway-subtitle {
+            color: #5b6975; font-size: 1rem; max-width: 860px; margin-bottom: 1.25rem;
+        }
+        .decision-note {
+            background: #eff4f8; border-left: 4px solid #174a73;
+            border-radius: 0 6px 6px 0; color: #223746;
+            padding: 0.9rem 1rem; margin: 0.85rem 0 1.8rem;
         }
         [data-testid="stMetric"], .workflow-card {
             background: #ffffff;
-            border: 1px solid #c8d5cc;
-            border-radius: 14px;
+            border: 1px solid #d7dee4;
+            border-radius: 8px;
             padding: 1rem;
         }
         .workflow-card {

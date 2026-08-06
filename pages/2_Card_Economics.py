@@ -8,10 +8,11 @@ from dashboard import apply_dashboard_styles, render_card_economics, render_foot
 st.set_page_config(page_title="Card Economics · Financial Wellness Lab", page_icon="📊", layout="wide")
 apply_dashboard_styles()
 render_navigation("Card strategy")
-st.title("Card program strategy")
+st.markdown('<div class="hero-kicker">Portfolio strategy</div>', unsafe_allow_html=True)
+st.title("Select the card model that creates the strongest risk-adjusted contribution")
 st.markdown(
-    "Compare issuance models against your portfolio assumptions, economics, and "
-    "investment criteria."
+    "A conclusion-led comparison of partner and direct-issuance models across "
+    "economics, launch speed, and balance-sheet exposure."
 )
 render_card_economics()
 render_footer()

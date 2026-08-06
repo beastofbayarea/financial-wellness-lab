@@ -159,3 +159,21 @@ invented AI memo.
 **Consequence.** Contributors must run the documented full-suite command before
 release or after domain changes. Truncated or ungrounded generated memos fall
 back to the complete standard summary.
+
+---
+
+## D11 — Conclusion-led card strategy presentation
+
+**Context.** The strategy screen exposed internal criterion names and presented
+results as a diagnostic dashboard rather than an executive decision exhibit.
+
+**Decision.** Lead with the recommendation, use a restrained navy consulting
+palette, translate every criterion into business language, and explain the
+calculation and sensitivities in terms a general audience can follow.
+
+**Why.** Decision-makers should understand the answer, evidence, and key
+assumptions without needing familiarity with the underlying implementation.
+
+**Consequence.** Raw model payloads are no longer displayed on the strategy
+page. Detailed assumptions remain available in a compact disclosure, while the
+main page reads as a conclusion-led management presentation.
