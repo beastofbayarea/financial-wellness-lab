@@ -198,6 +198,7 @@ def render_card_economics() -> None:
     portfolio = defaults["portfolio"]
     thresholds = defaults["thresholds"]
     revenue = defaults["revenue"]
+    memo_slot = st.empty()
 
     st.markdown("### Scenario assumptions")
     st.caption("Set the portfolio economics and investment criteria for this analysis.")
@@ -267,6 +268,18 @@ def render_card_economics() -> None:
         decisive_margin=float(decisive_margin),
     )
     output = compare(assumptions)
+
+    with memo_slot.container():
+        st.markdown('<div class="section-kicker">Executive memorandum</div>', unsafe_allow_html=True)
+        st.markdown("## Decision brief")
+        with st.spinner("Preparing the executive memorandum…"):
+            executive_memo = write_memo(output)
+        with st.container(border=True):
+            st.markdown(executive_memo or write_memo_fallback(output))
+        if executive_memo is None:
+            st.caption(
+                "The standard decision brief is shown because AI-assisted wording is temporarily unavailable."
+            )
 
     if output["recommended"] is None:
         takeaway = "No strategy meets the current investment criteria"
@@ -377,37 +390,6 @@ def render_card_economics() -> None:
             "Above that point, Direct issuance contributes more, assuming every other input stays unchanged."
         )
 
-    st.markdown('<div class="section-kicker">Recommendation</div>', unsafe_allow_html=True)
-    st.markdown("### Executive summary")
-    with st.container(border=True):
-        st.markdown(write_memo_fallback(output))
-    if st.button("Refine executive summary with AI", width="stretch"):
-        with st.spinner("Preparing a grounded executive summary…"):
-            generated_memo = write_memo(output)
-        if generated_memo:
-            with st.container(border=True):
-                st.write(generated_memo)
-        else:
-            st.warning(
-                "AI-assisted wording is temporarily unavailable. The calculated "
-                "recommendation and summary above are unchanged."
-            )
-    with st.expander("How the recommendation is calculated"):
-        st.markdown(
-            "**Annual contribution** combines interchange and interest revenue, then subtracts "
-            "partner fees, expected credit losses, fixed operating costs, and compliance staffing."
-        )
-        st.markdown("**Investment criteria used in this analysis**")
-        st.markdown(
-            f"- At least **{usd(contribution_floor, 0)}** in annual contribution\n"
-            f"- First customer live within **{max_months} months**\n"
-            f"- Expected annual credit losses no higher than **{thresholds['max_annual_loss_rate']:.1%}**\n"
-            f"- A lead of at least **{usd(decisive_margin, 0)}** before economics alone are considered conclusive"
-        )
-        st.caption(
-            "A strategy must pass the first three criteria to be considered. The final criterion "
-            "indicates confidence in the recommendation; it does not remove a strategy."
-        )
 
 
 def apply_dashboard_styles() -> None:

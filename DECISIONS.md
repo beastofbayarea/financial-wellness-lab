@@ -177,3 +177,21 @@ assumptions without needing familiarity with the underlying implementation.
 **Consequence.** Raw model payloads are no longer displayed on the strategy
 page. Detailed assumptions remain available in a compact disclosure, while the
 main page reads as a conclusion-led management presentation.
+
+---
+
+## D12 — Automatic executive memorandum
+
+**Context.** Requiring a separate action to generate an executive memorandum
+left the most decision-relevant narrative below the supporting analysis.
+
+**Decision.** Generate a detailed, grounded Gemini memorandum on every Card
+Strategy render and display it immediately below the page title. Remove the
+manual generation control and the model methodology disclosure.
+
+**Why.** Senior readers should receive the recommendation, quantified case,
+alternatives, trade-offs, sensitivities, and actions before reviewing exhibits.
+
+**Consequence.** Each Streamlit rerun invokes Gemini. When narration is
+unavailable or fails grounding checks, a complete deterministic decision brief
+occupies the same position and the underlying calculations remain unchanged.

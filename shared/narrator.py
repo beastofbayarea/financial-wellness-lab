@@ -221,15 +221,19 @@ def explain_decision(reason_code: str, facts: dict) -> str | None:
 def write_memo(results: dict) -> str | None:
     """Narrate a computed comparison. Receives figures only, never formulas."""
     system = (
-        "You write a complete, concise decision summary for a product executive. "
+        "You write a detailed decision memorandum for a senior management team. "
         "You are given COMPUTED results and must not recalculate anything. "
-        "Use exactly four short sections: Recommendation, Evidence, Risks, and "
-        "Key sensitivity. Do not include any numbers, dates, quarters, senders, "
-        "recipients, or titles. Do not infer causes or calculate comparisons. Use "
-        "only labels and conclusions explicitly present in the input. Under 180 "
+        "Use six Markdown sections: Recommendation, Financial case, Alternatives, "
+        "Risks and trade-offs, Key sensitivities, and Management actions. Explain "
+        "the recommended strategy, its annual contribution and lead over the next "
+        "best eligible option, whether that lead is decisive, which alternatives "
+        "did not meet the stated criteria, and what management should validate next. "
+        "Use figures only when they appear in the input; do not invent, infer, "
+        "recalculate, or add facts. Translate technical field names into natural "
+        "business language. Write for a general executive audience in 300 to 450 "
         "words. Finish every section and do not stop mid-sentence."
     )
-    generated = _call(system, json.dumps(results), max_tokens=4096)
+    generated = _call(system, json.dumps(results), max_tokens=6144)
     if not generated:
         return None
     cleaned = generated.replace(r"\$", "$").strip()
@@ -257,6 +261,8 @@ def _numeric_variants(payload) -> set[str]:
     elif isinstance(payload, (int, float)) and not isinstance(payload, bool):
         variants.add(str(payload).replace(",", ""))
         variants.add(f"{payload:g}".replace(",", ""))
+        if 0 < abs(payload) <= 1:
+            variants.add(f"{payload * 100:g}".replace(",", ""))
         if abs(payload) >= 1_000:
             variants.add(f"{payload / 1_000:,.2f}".replace(",", ""))
         if abs(payload) >= 1_000_000:
@@ -276,10 +282,16 @@ def write_memo_fallback(results: dict) -> str:
 
     excluded_text = ", ".join(excluded) if excluded else "No strategies"
     return (
-        f"**Recommendation**  \nProceed with {rec}.\n\n"
-        f"**Evidence**  \nThe modeled advantage is {margin_str}; the result is "
-        f"{decisive_str}.\n\n"
-        f"**Risks**  \n{excluded_text} failed one or more investment criteria.\n\n"
-        "**Key sensitivity**  \nMonthly spend per card can change the ranking at "
-        "higher volumes."
+        f"### **Recommendation**\nProceed with **{rec}** as the leading strategy under the current assumptions. "
+        f"The modeled advantage is {margin_str}, and the result is {decisive_str}.\n\n"
+        "### Financial case\nThe recommendation ranks the strategies by annual contribution after applying "
+        "the stated contribution, launch-time, and credit-loss criteria.\n\n"
+        f"### Alternatives\n{excluded_text} did not meet one or more of the current investment criteria. "
+        "Options that remain eligible should still be assessed for operating control and partner capability.\n\n"
+        "### Risks and trade-offs\nThe model is sensitive to portfolio scale, customer spending, revolving balances, "
+        "credit performance, implementation timing, and the cost of operating the program.\n\n"
+        "### Key sensitivities\nMonthly spend per active card can change the relative contribution and ranking "
+        "of the strategies as the portfolio grows.\n\n"
+        "### Management actions\nValidate the commercial assumptions, confirm implementation capacity, and agree "
+        "which non-financial considerations should break a close economic result before committing."
     )
