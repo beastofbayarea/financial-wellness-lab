@@ -35,5 +35,7 @@ def test_dashboard_contract():
     assert "Refine executive summary with AI" not in dashboard
     assert "Model audit details" not in dashboard
     assert "How the recommendation is calculated" not in dashboard
+    assert "These are operating archetypes, not individual vendors" in dashboard
+    assert all(label in dashboard for label in ("Sponsor bank", "Program manager", "Direct issuance"))
     assert len(inputs) == 15
     assert all(any(item.arg == "help" for item in call.keywords) for call in inputs)

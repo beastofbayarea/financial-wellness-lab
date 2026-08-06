@@ -200,6 +200,53 @@ def render_card_economics() -> None:
     revenue = defaults["revenue"]
     memo_slot = st.empty()
 
+    st.markdown('<div class="section-kicker">Decision scope</div>', unsafe_allow_html=True)
+    st.markdown("## Three operating models cover the practical ways to launch a card program")
+    st.markdown(
+        '<div class="scope-copy">These are operating archetypes, not individual vendors. '
+        'They represent the three materially different choices for who provides the bank '
+        'license, runs the program, and carries customer balances. Specific providers can '
+        'be evaluated after management selects the preferred operating model.</div>',
+        unsafe_allow_html=True,
+    )
+    option_columns = st.columns(3)
+    option_details = (
+        (
+            "01 · Sponsor bank",
+            "Use a bank as the regulated issuer while your team coordinates the customer experience and other partners.",
+            "Best when",
+            "Management wants more control than a fully managed program without building a bank-grade operating platform.",
+            "Primary trade-off",
+            "More partner coordination and a moderately longer launch than a program manager.",
+        ),
+        (
+            "02 · Program manager",
+            "Use one specialist partner to coordinate the issuing bank, processing, compliance, and day-to-day program operations.",
+            "Best when",
+            "Speed, lower implementation complexity, and a single accountable operating partner matter most.",
+            "Primary trade-off",
+            "Higher partner fees and less direct control over the operating model.",
+        ),
+        (
+            "03 · Direct issuance",
+            "Build and operate the issuing capability directly, retaining the economics while holding customer receivables and credit risk.",
+            "Best when",
+            "Scale, strategic control, and long-term economics justify substantial investment and regulatory responsibility.",
+            "Primary trade-off",
+            "The longest launch, highest fixed cost, and direct exposure to credit losses and customer balances.",
+        ),
+    )
+    for column, details in zip(option_columns, option_details):
+        title, definition, fit_label, fit, tradeoff_label, tradeoff = details
+        with column:
+            st.markdown(
+                f'<div class="strategy-card"><div class="strategy-card-title">{title}</div>'
+                f'<p>{definition}</p><div class="strategy-card-label">{fit_label}</div>'
+                f'<p>{fit}</p><div class="strategy-card-label">{tradeoff_label}</div>'
+                f'<p>{tradeoff}</p></div>',
+                unsafe_allow_html=True,
+            )
+
     st.markdown("### Scenario assumptions")
     st.caption("Set the portfolio economics and investment criteria for this analysis.")
 
@@ -423,6 +470,24 @@ def apply_dashboard_styles() -> None:
             background: #eff4f8; border-left: 4px solid #174a73;
             border-radius: 0 6px 6px 0; color: #223746;
             padding: 0.9rem 1rem; margin: 0.85rem 0 1.8rem;
+        }
+        .scope-copy {
+            color: #5b6975; font-size: 1rem; line-height: 1.55;
+            max-width: 960px; margin: 0 0 1.2rem;
+        }
+        .strategy-card {
+            background: #ffffff; border-top: 4px solid #174a73;
+            border-right: 1px solid #d7dee4; border-bottom: 1px solid #d7dee4;
+            border-left: 1px solid #d7dee4; border-radius: 4px;
+            min-height: 330px; padding: 1.1rem 1.15rem; margin-bottom: 1.2rem;
+        }
+        .strategy-card-title {
+            color: #0b1f33; font-size: 1.1rem; font-weight: 750; margin-bottom: 0.75rem;
+        }
+        .strategy-card p { color: #435463; font-size: 0.9rem; line-height: 1.48; }
+        .strategy-card-label {
+            color: #486276; font-size: 0.7rem; font-weight: 750;
+            letter-spacing: 0.09em; text-transform: uppercase; margin-top: 0.85rem;
         }
         [data-testid="stMetric"], .workflow-card {
             background: #ffffff;

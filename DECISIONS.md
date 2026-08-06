@@ -195,3 +195,20 @@ alternatives, trade-offs, sensitivities, and actions before reviewing exhibits.
 **Consequence.** Each Streamlit rerun invokes Gemini. When narration is
 unavailable or fails grounding checks, a complete deterministic decision brief
 occupies the same position and the underlying calculations remain unchanged.
+
+---
+
+## D13 — Explain the card strategy decision universe
+
+**Context.** The comparison presented three strategy names without explaining
+why those options were exhaustive or how their operating responsibilities differ.
+
+**Decision.** Define the choices as operating archetypes rather than vendors and
+explain the ownership model, best-fit situation, and primary trade-off for each.
+
+**Why.** A general audience needs to understand the strategic choice before it
+can interpret the modeled economics or select assumptions.
+
+**Consequence.** The Card Strategy page now establishes the decision scope
+immediately below the executive memorandum. Vendor selection remains a later
+step after management chooses an operating model.
