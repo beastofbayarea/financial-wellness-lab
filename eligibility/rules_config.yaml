@@ -1,0 +1,9 @@
+# Eligibility rules configuration and operational thresholds
+restricted_states:
+  - NY
+  - CT
+
+min_deposit_history_days: 60
+min_deposit_count: 2
+base_limit_cents: 25000         # $250 baseline limit
+direct_deposit_limit_cents: 50000  # $500 with recurring direct deposit

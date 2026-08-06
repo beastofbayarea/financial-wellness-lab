@@ -1,0 +1,50 @@
+# Illustrative parameters. See LIMITATIONS.md before trusting any figure.
+# Order-of-magnitude estimates assembled from public sources.
+
+portfolio:
+  active_cards: 100000
+  monthly_spend_per_card_usd: 420
+  avg_revolving_balance_usd: 340
+  revolve_rate: 0.38          # share of accounts carrying a balance
+
+revenue:
+  interchange_rate: 0.0175    # net of network fees
+  apr: 0.2399
+
+# Walk-away thresholds. Set BEFORE the comparison is run, not after.
+# Tests assert these actually trigger. That is the point of the module.
+thresholds:
+  min_annual_contribution_usd: 2500000
+  max_months_to_first_customer: 18
+  max_annual_loss_rate: 0.09
+  min_margin_advantage_over_next_best_usd: 1500000
+
+paths:
+  sponsor_bank:
+    label: Sponsor bank
+    partner_fee_share_of_interchange: 0.22
+    fixed_annual_cost_usd: 2600000
+    compliance_headcount: 6
+    months_to_first_customer: 9
+    annual_loss_rate: 0.062
+    owns_receivable: false
+
+  program_manager:
+    label: Program manager
+    partner_fee_share_of_interchange: 0.34
+    fixed_annual_cost_usd: 1400000
+    compliance_headcount: 3
+    months_to_first_customer: 6
+    annual_loss_rate: 0.062
+    owns_receivable: false
+
+  direct_issuance:
+    label: Direct issuance
+    partner_fee_share_of_interchange: 0.0
+    fixed_annual_cost_usd: 9800000
+    compliance_headcount: 22
+    months_to_first_customer: 30
+    annual_loss_rate: 0.071
+    owns_receivable: true
+
+fully_loaded_compliance_cost_per_head_usd: 210000
