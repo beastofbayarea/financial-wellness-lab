@@ -88,6 +88,9 @@ limit and no denials. A denial has a zero limit and one reason by default; with
 `collect_all=True`, `denials` contains every triggered rule in declared order.
 The first denial remains the primary reason.
 
+The dashboard always uses `collect_all=True` so reviewers receive the complete
+set of policy exceptions without exposing a diagnostic-mode control.
+
 The configured limits are $250 without direct deposit and $500 with direct
 deposit. They are illustrative ceilings, not requested-amount calculations.
 

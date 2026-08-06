@@ -108,3 +108,29 @@ def test_stale_explicit_credential_path_falls_back_to_local_gcloud_adc(
     assert "stale external credential path ignored" in source
     assert credentials is sentinel
     assert captured["path"] == str(adc)
+
+
+def test_unsupported_generated_timeline_falls_back(monkeypatch):
+    monkeypatch.setattr(
+        narrator,
+        "_call",
+        lambda *args, **kwargs: (
+            r"Your credit limit is \$500. Request an increase after six months."
+        ),
+    )
+
+    result = narrator.explain_decision("APPROVED", {"limit_cents": 50_000})
+
+    assert result == "Your advance request of $500 has been approved."
+
+
+def test_grounded_generated_explanation_is_normalized(monkeypatch):
+    monkeypatch.setattr(
+        narrator,
+        "_call",
+        lambda *args, **kwargs: r"Your advance limit is \$500.",
+    )
+
+    assert narrator.explain_decision(
+        "APPROVED", {"limit_cents": 50_000}
+    ) == "Your advance limit is $500."

@@ -17,3 +17,7 @@ textColor = "#17211B"
 
 [browser]
 gatherUsageStats = false
+
+[client]
+showSidebarNavigation = false
+toolbarMode = "minimal"

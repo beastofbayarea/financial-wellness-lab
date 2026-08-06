@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -138,6 +139,34 @@ def _scrub(facts: dict) -> dict:
     return {k: v for k, v in facts.items() if k in ALLOWED_FIELDS}
 
 
+def _grounded_explanation(text: str, facts: dict) -> str | None:
+    """Reject unsupported numeric or time claims and normalize finance wording."""
+    cleaned = text.replace(r"\$", "$").replace("credit limit", "advance limit")
+    allowed_numbers: set[str] = set()
+    for key, value in facts.items():
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            allowed_numbers.add(str(value))
+            allowed_numbers.add(f"{value:g}" if isinstance(value, float) else str(value))
+            if key.endswith("_cents"):
+                dollars = value / 100
+                allowed_numbers.add(f"{dollars:g}")
+                allowed_numbers.add(f"{dollars:,.0f}")
+                allowed_numbers.add(f"{dollars:,.2f}")
+    observed_numbers = {
+        token.replace(",", "")
+        for token in re.findall(r"\d[\d,]*(?:\.\d+)?", cleaned)
+    }
+    normalized_allowed = {token.replace(",", "") for token in allowed_numbers}
+    if not observed_numbers.issubset(normalized_allowed):
+        return None
+    has_duration_fact = any(key.startswith("days_") for key in facts)
+    if not has_duration_fact and re.search(
+        r"\b(?:day|days|week|weeks|month|months|year|years)\b", cleaned, re.I
+    ):
+        return None
+    return cleaned.strip() or None
+
+
 def _call(system: str, user: str, max_tokens: int = 400) -> str | None:
     """Call Gemini on Vertex AI, returning ``None`` on missing config or failure."""
     config = llm_config()
@@ -181,7 +210,12 @@ def explain_decision(reason_code: str, facts: dict) -> str | None:
         "Plain language, no jargon, no apology, no emoji. "
         "Never invent a number that is not given to you."
     )
-    return _call(system, json.dumps(safe), max_tokens=200)
+    generated = _call(system, json.dumps(safe), max_tokens=200)
+    if not generated:
+        return None
+    return _grounded_explanation(generated, safe) or explain_decision_fallback(
+        reason_code, safe
+    )
 
 
 def write_memo(results: dict) -> str | None:

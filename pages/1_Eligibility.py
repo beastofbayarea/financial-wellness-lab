@@ -2,15 +2,16 @@
 
 import streamlit as st
 
-from dashboard import apply_dashboard_styles, render_eligibility, render_footer
+from dashboard import apply_dashboard_styles, render_eligibility, render_footer, render_navigation
 
 
 st.set_page_config(page_title="Eligibility · Financial Wellness Lab", page_icon="✅", layout="wide")
 apply_dashboard_styles()
-st.title("Eligibility MVP")
+render_navigation("Advance eligibility")
+st.title("Advance eligibility")
 st.markdown(
-    "Build a synthetic applicant scenario and trace the deterministic rule workflow "
-    "from input facts to an approval limit or actionable denial reasons."
+    "Review an applicant scenario against the current advance policy and receive "
+    "a complete, explainable decision."
 )
 render_eligibility()
 render_footer()

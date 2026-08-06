@@ -70,9 +70,9 @@ def build_card_assumptions(
 
 
 def render_eligibility() -> None:
-    """Render the deterministic eligibility scenario builder."""
-    st.subheader("Advance eligibility")
-    st.caption("Change the applicant facts, run the rules, and inspect every reason behind the result.")
+    """Render the deterministic eligibility review."""
+    st.markdown("### Applicant profile")
+    st.caption("Enter the account and deposit details used by the eligibility policy.")
 
     with st.form("eligibility_form"):
         left, right = st.columns(2)
@@ -107,11 +107,7 @@ def render_eligibility() -> None:
                 "Account frozen",
                 help="Triggers ACCOUNT_FROZEN, the highest-priority denial, with a support-intervention remedy.",
             )
-            collect_all = st.checkbox(
-                "Show every triggered rule", value=True,
-                help="When enabled, returns every failing rule in priority order. When disabled, evaluation stops at the first failure.",
-            )
-        st.form_submit_button("Evaluate applicant", type="primary", width="stretch")
+        st.form_submit_button("Review eligibility", type="primary", width="stretch")
 
     applicant = Applicant(
         user_id="dashboard-scenario",
@@ -123,41 +119,50 @@ def render_eligibility() -> None:
         prior_defaults=int(prior_defaults),
         account_frozen=account_frozen,
     )
-    decision = evaluate(applicant, collect_all=collect_all)
+    decision = evaluate(applicant, collect_all=True)
 
+    st.markdown("### Eligibility decision")
     if decision.approved:
-        st.success(f"Approved up to {usd(decision.limit_cents / 100, 0)}")
-        st.metric("Advance limit", usd(decision.limit_cents / 100, 0))
+        status, limit, reasons = st.columns(3)
+        status.metric("Status", "Eligible")
+        limit.metric("Available advance", usd(decision.limit_cents / 100, 0))
+        reasons.metric("Policy exceptions", "None")
     else:
-        st.error(f"Declined · {len(decision.denials)} rule(s) triggered")
+        status, limit, reasons = st.columns(3)
+        status.metric("Status", "Not eligible")
+        limit.metric("Available advance", "$0")
+        reasons.metric("Policy exceptions", len(decision.denials))
+        st.markdown("#### What needs attention")
         for denial in decision.denials:
             with st.container(border=True):
                 st.markdown(f"**{denial.code.replace('_', ' ').title()}**")
-                st.caption(denial.category.value.replace("_", " ").title())
                 st.write(denial.remedy)
                 if denial.estimated_days is not None:
-                    st.metric("Estimated wait", f"{denial.estimated_days} days")
+                    st.caption(f"Estimated wait: {denial.estimated_days} days")
 
     explanation = explain_decision_fallback(
         decision.reason_code or "DENIED",
         {**decision.facts, "remedy": decision.remedy or ""},
     )
-    st.info(f"Plain-language result: {explanation}")
-    if st.button("Generate explanation with Gemini", width="stretch"):
-        with st.spinner("Generating from the already-computed decision…"):
+    st.markdown("#### Customer-ready explanation")
+    with st.container(border=True):
+        st.write(explanation)
+    if st.button("Refine explanation with AI", width="stretch"):
+        with st.spinner("Preparing a grounded explanation…"):
             generated = explain_decision(
                 decision.reason_code or "DENIED",
                 {**decision.facts, "remedy": decision.remedy or ""},
             )
         if generated:
-            st.success(generated)
+            with st.container(border=True):
+                st.write(generated)
         else:
             st.warning(
-                "Gemini narration is unavailable. The deterministic decision and "
-                "fallback above remain valid; check Vertex AI credentials and access."
+                "AI-assisted wording is temporarily unavailable. The eligibility "
+                "decision and explanation above are unchanged."
             )
 
-    with st.expander("Structured decision output"):
+    with st.expander("Decision audit details"):
         st.json(
             {
                 "approved": decision.approved,
@@ -178,14 +183,14 @@ def render_eligibility() -> None:
 
 
 def render_card_economics() -> None:
-    """Render the card-program assumption lab and computed results."""
+    """Render the card-program strategy analysis."""
     defaults = load()
     portfolio = defaults["portfolio"]
     thresholds = defaults["thresholds"]
     revenue = defaults["revenue"]
 
-    st.subheader("Card economics")
-    st.caption("Stress the portfolio assumptions and see which issuance paths clear the gates.")
+    st.markdown("### Scenario assumptions")
+    st.caption("Set the portfolio economics and investment criteria for this analysis.")
 
     with st.form("economics_form"):
         volume, economics, gates = st.columns(3)
@@ -220,7 +225,7 @@ def render_card_economics() -> None:
                 help="Multiplies annual card spend into interchange revenue. Partner fees also rise because they are a share of interchange.",
             )
         with gates:
-            st.markdown("**Walk-away gates**")
+            st.markdown("**Investment criteria**")
             contribution_floor = st.number_input(
                 "Minimum annual contribution", min_value=-50_000_000.0,
                 max_value=100_000_000.0,
@@ -239,7 +244,7 @@ def render_card_economics() -> None:
                 step=250_000.0,
                 help="Controls confidence, not viability. The leading viable path is marked decisive only when its lead meets this amount.",
             )
-        st.form_submit_button("Run comparison", type="primary", width="stretch")
+        st.form_submit_button("Evaluate strategies", type="primary", width="stretch")
 
     assumptions = build_card_assumptions(
         active_cards=int(active_cards),
@@ -253,23 +258,26 @@ def render_card_economics() -> None:
     )
     output = compare(assumptions)
 
+    st.markdown("### Recommendation")
     winner, margin, confidence = st.columns(3)
-    winner.metric("Highest-ranked viable path", output["recommended"] or "None")
+    winner.metric("Leading strategy", output["recommended"] or "No viable option")
     margin.metric(
         "Lead over runner-up",
         usd(output["margin_over_next_best_usd"], 0)
         if output["margin_over_next_best_usd"] is not None else "N/A",
     )
-    confidence.metric("Decision status", "Decisive" if output["decisive"] else "Not decisive")
+    confidence.metric("Confidence", "Decisive" if output["decisive"] else "Further review")
 
     if output["recommended"] is None:
-        st.error("No path clears every configured walk-away gate.")
+        st.error("No strategy meets all investment criteria. Adjust the assumptions or review the excluded options.")
     elif output["decisive"]:
-        st.success(f"{output['recommended']} ranks first and the result is decisive.")
+        st.success(f"{output['recommended']} leads the viable strategies by a decisive margin.")
     else:
         st.warning(
-            f"{output['recommended']} ranks first, but its lead does not clear the decisive-margin gate."
+            f"{output['recommended']} leads, but the advantage is below the confidence threshold. Review strategic factors before committing."
         )
+
+    st.markdown("#### Strategy comparison")
 
     rows = [
         {
@@ -295,7 +303,7 @@ def render_card_economics() -> None:
     )
     st.bar_chart(rows, x="Path", y="Annual contribution", color="Status")
 
-    st.markdown("#### Sensitivity milestones")
+    st.markdown("#### Volume sensitivity")
     milestone_columns = st.columns(len(assumptions["paths"]))
     for column, key in zip(milestone_columns, assumptions["paths"]):
         point = break_even_spend(key, assumptions)
@@ -311,19 +319,21 @@ def render_card_economics() -> None:
             f"{usd(crossover, 0)} monthly spend per card."
         )
 
-    with st.expander("Deterministic executive memo"):
+    st.markdown("### Executive summary")
+    with st.container(border=True):
         st.text(write_memo_fallback(output))
-    if st.button("Generate executive memo with Gemini", width="stretch"):
-        with st.spinner("Narrating the already-computed comparison…"):
+    if st.button("Refine executive summary with AI", width="stretch"):
+        with st.spinner("Preparing a grounded executive summary…"):
             generated_memo = write_memo(output)
         if generated_memo:
-            st.success(generated_memo)
+            with st.container(border=True):
+                st.write(generated_memo)
         else:
             st.warning(
-                "Gemini narration is unavailable. The deterministic results and memo "
-                "remain valid; check Vertex AI credentials and access."
+                "AI-assisted wording is temporarily unavailable. The calculated "
+                "recommendation and summary above are unchanged."
             )
-    with st.expander("Structured comparison output"):
+    with st.expander("Model audit details"):
         st.json(output)
 
 
@@ -334,9 +344,10 @@ def apply_dashboard_styles() -> None:
         <style>
         :root { color-scheme: light; }
         .stApp {
-            background: linear-gradient(145deg, #f7f8f5 0%, #e9f1eb 100%);
+            background: #f5f7f5;
             color: #17211b;
         }
+        .block-container { max-width: 1280px; padding-top: 2.5rem; padding-bottom: 3rem; }
         .stApp h1, .stApp h2, .stApp h3, .stApp h4,
         .stApp p, .stApp label, .stApp [data-testid="stCaptionContainer"] {
             color: #17211b;
@@ -376,34 +387,60 @@ def apply_dashboard_styles() -> None:
             color: #ffffff !important;
         }
         [data-testid="stAlert"] p { color: inherit; }
+        [data-testid="stSidebar"] { border-right: 1px solid #d7e0d9; }
+        .product-name { font-size: 1.05rem; font-weight: 750; color: #17211b; }
+        .product-kicker { color: #5e6f64; font-size: 0.82rem; margin-bottom: 1.25rem; }
+        .nav-item {
+            display: block; padding: 0.68rem 0.8rem; margin: 0.2rem 0;
+            border-radius: 0.55rem; color: #34463a !important;
+            text-decoration: none !important; font-weight: 550;
+        }
+        .nav-item:hover { background: #dfe9e2; }
+        .nav-item.active { background: #cddfd2; color: #173b25 !important; font-weight: 700; }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
 
+def render_navigation(active: str) -> None:
+    """Render stable, product-style navigation independent of page discovery."""
+    st.sidebar.markdown('<div class="product-name">Financial Wellness</div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="product-kicker">Decision Studio</div>', unsafe_allow_html=True)
+    links = (
+        ("Overview", "/"),
+        ("Advance eligibility", "/Eligibility"),
+        ("Card strategy", "/Card_Economics"),
+    )
+    for label, href in links:
+        selected = " active" if label == active else ""
+        st.sidebar.markdown(
+            f'<a class="nav-item{selected}" href="{href}" target="_self">{label}</a>',
+            unsafe_allow_html=True,
+        )
+    st.sidebar.markdown("---")
+    st.sidebar.caption("Deterministic decisions · AI-assisted explanations")
+
+
 def render_home() -> None:
     """Explain the application workflow and link to each independent MVP page."""
-    st.title("Financial Wellness Lab")
+    render_navigation("Overview")
+    st.title("Financial Wellness Decision Studio")
     st.markdown(
-        "Two deterministic product experiments with one shared principle: "
-        "**software makes the decision; language only explains the result.**"
+        "Evaluate advance eligibility and card-program strategy with transparent, "
+        "repeatable decision models."
     )
 
     config = llm_config()
-    credentials_ready, credential_source = llm_credential_status()
+    credentials_ready, _ = llm_credential_status()
     with st.container(border=True):
         status, provider, model = st.columns(3)
-        status.metric(
-            "LLM readiness",
-            "Ready" if config.configured and credentials_ready else "Fallback only",
+        status.metric("Decision engines", "Online")
+        provider.metric(
+            "AI explanations",
+            "Available" if config.configured and credentials_ready else "Standard wording",
         )
-        provider.metric("Optional provider", "Vertex AI")
-        model.metric("Narration model", config.model)
-        st.caption(
-            f"Project: {config.project or 'not set'} · Location: {config.location} · "
-            f"Credentials: {credential_source}."
-        )
+        model.metric("Data storage", "Session only")
 
     st.subheader("How the application works")
     st.caption(
@@ -412,10 +449,10 @@ def render_home() -> None:
     )
     steps = st.columns(4)
     workflow = (
-        ("01 · Enter", "Create a synthetic scenario", "Use a form to change applicant facts or portfolio assumptions. Nothing is persisted."),
+        ("01 · Enter", "Define a scenario", "Enter applicant facts or portfolio assumptions. Scenario data remains in the current session."),
         ("02 · Decide", "Run deterministic logic", "Eligibility evaluates ordered rules. Card economics executes fixed formulas and pre-declared gates."),
         ("03 · Inspect", "Review evidence", "See reasons, remedies, financial metrics, exclusions, thresholds, and structured output."),
-        ("04 · Explain", "Translate the result", "Deterministic text is immediate. An explicit button can ask Gemini to narrate the already-computed result."),
+        ("04 · Explain", "Prepare the message", "Standard wording is immediate. AI can refine the explanation without changing the underlying result."),
     )
     for column, (number, title, body) in zip(steps, workflow):
         column.markdown(
@@ -424,7 +461,7 @@ def render_home() -> None:
             unsafe_allow_html=True,
         )
 
-    st.subheader("Choose an MVP")
+    st.subheader("Choose a workflow")
     eligibility, economics = st.columns(2)
     with eligibility:
         with st.container(border=True):
@@ -437,7 +474,7 @@ def render_home() -> None:
                 "**Output:** approval and limit, or reason codes with categorized remedies."
             )
             st.link_button(
-                "Open Eligibility MVP",
+                "Open eligibility review",
                 "/Eligibility",
                 icon=":material/fact_check:",
                 width="stretch",
@@ -447,14 +484,14 @@ def render_home() -> None:
             st.markdown("### Card economics")
             st.write(
                 "Compare sponsor-bank, program-manager, and direct-issuance paths "
-                "while changing portfolio economics and walk-away gates."
+                "while changing portfolio economics and investment criteria."
             )
             st.markdown(
                 "**Output:** viable ranking, decisiveness, exclusions, contribution, "
                 "exposure, break-even points, and crossover sensitivity."
             )
             st.link_button(
-                "Open Card Economics MVP",
+                "Open strategy analysis",
                 "/Card_Economics",
                 icon=":material/finance_mode:",
                 width="stretch",
@@ -485,7 +522,7 @@ def render_home() -> None:
     ]
     st.dataframe(boundary_rows, hide_index=True, width="stretch")
 
-    with st.expander("What this lab does not do"):
+    with st.expander("Scope and limitations"):
         st.markdown(
             "- It does not use real customer data or persist form submissions.\n"
             "- It does not provide lending, compliance, legal, or investment advice.\n"

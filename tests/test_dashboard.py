@@ -13,6 +13,8 @@ def test_dashboard_routes_and_theme_are_present():
     theme = (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
 
     assert "How the application works" in source
+    assert "Show every triggered rule" not in source
+    assert "collect_all=True" in source
     assert "/Eligibility" in source and "/Card_Economics" in source
     assert (ROOT / "pages" / "1_Eligibility.py").is_file()
     assert (ROOT / "pages" / "2_Card_Economics.py").is_file()
@@ -30,5 +32,5 @@ def test_every_scenario_input_has_help_text():
         and node.func.attr in input_methods
     ]
 
-    assert len(calls) == 16
+    assert len(calls) == 15
     assert all(any(keyword.arg == "help" for keyword in call.keywords) for call in calls)

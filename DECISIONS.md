@@ -122,3 +122,20 @@ independent from it.
 **Consequence.** Gemini narration requires a configured Google Cloud project,
 Vertex access, and an authorized ADC identity. Missing configuration or any SDK
 failure returns `None`; deterministic fallbacks remain the correctness path.
+
+---
+
+## D9 — Production-facing dashboard with complete eligibility results
+
+**Context.** Diagnostic toggles, provider names, raw configuration, and repeated
+status banners made the interface read like a development harness.
+
+**Decision.** Always collect every eligibility failure, present one clear result
+hierarchy, move raw payloads into audit-detail expanders, and use stable product
+navigation and customer-facing language. AI remains an optional wording action.
+
+**Why.** Reviewers need complete policy evidence, but they should not need to
+understand internal evaluation modes or infrastructure to use the product.
+
+**Consequence.** The dashboard no longer exposes single-reason evaluation.
+Callers of the Python API may still choose the first-failure behavior.
