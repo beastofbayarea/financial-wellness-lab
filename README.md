@@ -14,8 +14,8 @@ Eligibility is decided by deterministic rules. Economics are computed by arithme
 
 | Module                                 | Question it answers                                                                             | Status  |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
-| [`eligibility/`](./eligibility)       | Can this user take an advance, and can we tell them *why* in a sentence they'd accept?        | MVP     |
-| [`card_economics/`](./card_economics) | Sponsor bank, program manager, or direct issuance — and what assumption would flip the answer? | MVP     |
+| [`eligibility/`](./eligibility)       | Can this user take an advance, and can we tell them *why* in a sentence they'd accept?        | Available |
+| [`card_economics/`](./card_economics) | Sponsor bank, program manager, or direct issuance — and what assumption would flip the answer? | Available |
 | [`ewa_sim/`](./ewa_sim)               | How does portfolio margin move as advance limits rise?                                          | Planned |
 
 ## Findings so far
@@ -47,7 +47,7 @@ python -m eligibility.demo
 python -m card_economics.compare
 ```
 
-Or explore both MVPs in the local dashboard:
+Or explore both workflows in the local dashboard:
 
 ```bash
 streamlit run dashboard.py
@@ -62,9 +62,9 @@ with Application Default Credentials; see [`SETUP.md`](./SETUP.md). Without
 Vertex access, the modules preserve the structured result and use deterministic
 fallback text.
 
-The test suite covers rule ordering, multi-reason
-diagnostics, narration boundaries and fallbacks, economic thresholds, unit
-economics, volume sensitivity, and dashboard rendering.
+The default test command runs a minimal smoke suite for fast iteration. Run
+`python -m pytest eligibility card_economics tests` for the complete domain,
+narration-boundary, and presentation contract suite.
 
 ## See also
 

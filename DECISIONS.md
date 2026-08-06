@@ -86,14 +86,14 @@ decisiveness threshold.
 
 ## D7 — One thin dashboard over both deterministic engines
 
-**Context.** The CLI demos prove the two MVPs work, but make scenario comparison
+**Context.** The CLI demos prove the two workflows work, but make scenario comparison
 slower for readers who do not want to edit Python or YAML.
 
 **Decision.** Provide one Streamlit application with a workflow overview and
 separate pages for eligibility and card economics. The UI imports the existing
 rule and model functions.
 
-**Why.** A thin presentation layer makes both MVPs testable without creating a
+**Why.** A thin presentation layer makes both workflows testable without creating a
 second implementation of either decision path. Streamlit also keeps the project
 Python-only and locally runnable.
 
@@ -139,3 +139,23 @@ understand internal evaluation modes or infrastructure to use the product.
 
 **Consequence.** The dashboard no longer exposes single-reason evaluation.
 Callers of the Python API may still choose the first-failure behavior.
+
+---
+
+## D10 — Fast default checks and complete memo boundaries
+
+**Context.** Repeatedly collecting every domain and provider-boundary test made
+small presentation edits unnecessarily slow. Gemini could also spend a small
+output allowance before completing an executive memo.
+
+**Decision.** Make `pytest` a two-test smoke loop and retain the full suite behind
+an explicit path command. Give memo generation a larger output allowance and
+accept generated text only when it is complete and grounded in supplied facts.
+
+**Why.** Fast feedback supports UI iteration without deleting deeper release
+coverage. A deterministic summary is preferable to displaying a partial or
+invented AI memo.
+
+**Consequence.** Contributors must run the documented full-suite command before
+release or after domain changes. Truncated or ungrounded generated memos fall
+back to the complete standard summary.

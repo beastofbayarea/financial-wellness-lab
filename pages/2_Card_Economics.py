@@ -1,4 +1,4 @@
-"""Dedicated Streamlit page for the card-economics MVP."""
+"""Dedicated Streamlit page for card-program strategy."""
 
 import streamlit as st
 

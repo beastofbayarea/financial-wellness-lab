@@ -1,4 +1,4 @@
-"""Interactive dashboard for the two implemented financial-wellness MVPs."""
+"""Interactive dashboard for the financial-wellness decision workflows."""
 
 from __future__ import annotations
 
@@ -16,8 +16,6 @@ from eligibility.rules import Applicant, evaluate
 from shared.narrator import (
     explain_decision,
     explain_decision_fallback,
-    llm_config,
-    llm_credential_status,
     write_memo,
     write_memo_fallback,
 )
@@ -321,7 +319,7 @@ def render_card_economics() -> None:
 
     st.markdown("### Executive summary")
     with st.container(border=True):
-        st.text(write_memo_fallback(output))
+        st.markdown(write_memo_fallback(output))
     if st.button("Refine executive summary with AI", width="stretch"):
         with st.spinner("Preparing a grounded executive summary…"):
             generated_memo = write_memo(output)
@@ -369,6 +367,14 @@ def apply_dashboard_styles() -> None:
             letter-spacing: 0.08em;
             text-transform: uppercase;
         }
+        .hero-kicker {
+            color: #8f2f29; font-size: 0.78rem; font-weight: 750;
+            letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.6rem;
+        }
+        .hero-copy { color: #526158; font-size: 1.12rem; max-width: 720px; margin-bottom: 2rem; }
+        .principle { padding: 0.6rem 0; }
+        .principle strong { display: block; font-size: 0.96rem; margin-bottom: 0.2rem; }
+        .principle span { color: #66756c; font-size: 0.88rem; }
         [data-testid="stForm"] {
             background: #ffffff;
             border-color: #c8d5cc;
@@ -423,72 +429,39 @@ def render_navigation(active: str) -> None:
 
 
 def render_home() -> None:
-    """Explain the application workflow and link to each independent MVP page."""
+    """Render a minimal entry point for the two decision workflows."""
     render_navigation("Overview")
-    st.title("Financial Wellness Decision Studio")
     st.markdown(
-        "Evaluate advance eligibility and card-program strategy with transparent, "
-        "repeatable decision models."
+        '<div class="hero-kicker">Decision intelligence</div>',
+        unsafe_allow_html=True,
+    )
+    st.title("Financial decisions, made transparent.")
+    st.markdown(
+        '<div class="hero-copy">Review advance eligibility and compare card-program '
+        'strategies with deterministic models, complete evidence, and clear explanations.</div>',
+        unsafe_allow_html=True,
     )
 
-    config = llm_config()
-    credentials_ready, _ = llm_credential_status()
-    with st.container(border=True):
-        status, provider, model = st.columns(3)
-        status.metric("Decision engines", "Online")
-        provider.metric(
-            "AI explanations",
-            "Available" if config.configured and credentials_ready else "Standard wording",
-        )
-        model.metric("Data storage", "Session only")
-
-    st.subheader("How the application works")
-    st.caption(
-        "Both workflows keep user-entered scenarios separate from optional narration. "
-        "No language model approves an advance or calculates card economics."
-    )
-    steps = st.columns(4)
-    workflow = (
-        ("01 · Enter", "Define a scenario", "Enter applicant facts or portfolio assumptions. Scenario data remains in the current session."),
-        ("02 · Decide", "Run deterministic logic", "Eligibility evaluates ordered rules. Card economics executes fixed formulas and pre-declared gates."),
-        ("03 · Inspect", "Review evidence", "See reasons, remedies, financial metrics, exclusions, thresholds, and structured output."),
-        ("04 · Explain", "Prepare the message", "Standard wording is immediate. AI can refine the explanation without changing the underlying result."),
-    )
-    for column, (number, title, body) in zip(steps, workflow):
-        column.markdown(
-            f'<div class="workflow-card"><div class="workflow-step">{number}</div>'
-            f'<h4>{title}</h4><p>{body}</p></div>',
-            unsafe_allow_html=True,
-        )
-
-    st.subheader("Choose a workflow")
     eligibility, economics = st.columns(2)
     with eligibility:
         with st.container(border=True):
-            st.markdown("### Advance eligibility")
+            st.markdown("#### Advance eligibility")
             st.write(
-                "Test approval limits and ordered denial rules using state, deposit "
-                "history, outstanding advances, defaults, and account status."
-            )
-            st.markdown(
-                "**Output:** approval and limit, or reason codes with categorized remedies."
+                "Review an applicant against policy rules and return every reason "
+                "behind the decision."
             )
             st.link_button(
-                "Open eligibility review",
+                "Review eligibility",
                 "/Eligibility",
                 icon=":material/fact_check:",
                 width="stretch",
             )
     with economics:
         with st.container(border=True):
-            st.markdown("### Card economics")
+            st.markdown("#### Card program strategy")
             st.write(
-                "Compare sponsor-bank, program-manager, and direct-issuance paths "
-                "while changing portfolio economics and investment criteria."
-            )
-            st.markdown(
-                "**Output:** viable ranking, decisiveness, exclusions, contribution, "
-                "exposure, break-even points, and crossover sensitivity."
+                "Compare issuance strategies across contribution, speed, exposure, "
+                "and investment criteria."
             )
             st.link_button(
                 "Open strategy analysis",
@@ -497,37 +470,17 @@ def render_home() -> None:
                 width="stretch",
             )
 
-    st.subheader("Architecture boundaries")
-    boundary_rows = [
-        {
-            "Layer": "Scenario input",
-            "Eligibility": "Synthetic applicant facts",
-            "Card economics": "Portfolio and gate assumptions",
-        },
-        {
-            "Layer": "Decision engine",
-            "Eligibility": "Ordered pure rules",
-            "Card economics": "Arithmetic formulas and thresholds",
-        },
-        {
-            "Layer": "Evidence",
-            "Eligibility": "Reason codes, remedies, allowlisted facts",
-            "Card economics": "Computed metrics and failed gates",
-        },
-        {
-            "Layer": "Explanation",
-            "Eligibility": "Plain-language deterministic fallback",
-            "Card economics": "Deterministic executive memo",
-        },
-    ]
-    st.dataframe(boundary_rows, hide_index=True, width="stretch")
-
-    with st.expander("Scope and limitations"):
-        st.markdown(
-            "- It does not use real customer data or persist form submissions.\n"
-            "- It does not provide lending, compliance, legal, or investment advice.\n"
-            "- It does not let a language model change a decision or calculation.\n"
-            "- It does not implement the planned EWA portfolio simulator."
+    st.markdown("---")
+    principles = st.columns(3)
+    principle_copy = (
+        ("Deterministic", "Rules and formulas—not prompts—produce every decision."),
+        ("Explainable", "Every outcome includes the evidence and next action."),
+        ("Session-based", "Scenario inputs are evaluated without being persisted."),
+    )
+    for column, (title, body) in zip(principles, principle_copy):
+        column.markdown(
+            f'<div class="principle"><strong>{title}</strong><span>{body}</span></div>',
+            unsafe_allow_html=True,
         )
 
 

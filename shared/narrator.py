@@ -221,13 +221,47 @@ def explain_decision(reason_code: str, facts: dict) -> str | None:
 def write_memo(results: dict) -> str | None:
     """Narrate a computed comparison. Receives figures only, never formulas."""
     system = (
-        "You write a short decision memo for a product executive. "
+        "You write a complete, concise decision summary for a product executive. "
         "You are given COMPUTED results and must not recalculate anything. "
-        "Structure: recommendation, the reasoning in three bullets, then the "
-        "single assumption that would most change the answer if wrong. "
-        "Under 200 words. Every number you cite must appear in the input."
+        "Use exactly four short sections: Recommendation, Evidence, Risks, and "
+        "Key sensitivity. Do not include any numbers, dates, quarters, senders, "
+        "recipients, or titles. Do not infer causes or calculate comparisons. Use "
+        "only labels and conclusions explicitly present in the input. Under 180 "
+        "words. Finish every section and do not stop mid-sentence."
     )
-    return _call(system, json.dumps(results), max_tokens=600)
+    generated = _call(system, json.dumps(results), max_tokens=4096)
+    if not generated:
+        return None
+    cleaned = generated.replace(r"\$", "$").strip()
+    if len(cleaned) < 180 or cleaned[-1] not in ".!?":
+        return write_memo_fallback(results)
+    allowed_numbers = _numeric_variants(results)
+    observed_numbers = {
+        token.replace(",", "")
+        for token in re.findall(r"\d[\d,]*(?:\.\d+)?", cleaned)
+    }
+    if not observed_numbers.issubset(allowed_numbers):
+        return write_memo_fallback(results)
+    return cleaned
+
+
+def _numeric_variants(payload) -> set[str]:
+    """Collect raw and common display forms for numbers already in a payload."""
+    variants: set[str] = set()
+    if isinstance(payload, dict):
+        for value in payload.values():
+            variants.update(_numeric_variants(value))
+    elif isinstance(payload, (list, tuple)):
+        for value in payload:
+            variants.update(_numeric_variants(value))
+    elif isinstance(payload, (int, float)) and not isinstance(payload, bool):
+        variants.add(str(payload).replace(",", ""))
+        variants.add(f"{payload:g}".replace(",", ""))
+        if abs(payload) >= 1_000:
+            variants.add(f"{payload / 1_000:,.2f}".replace(",", ""))
+        if abs(payload) >= 1_000_000:
+            variants.add(f"{payload / 1_000_000:,.2f}".replace(",", ""))
+    return variants
 
 
 def write_memo_fallback(results: dict) -> str:
@@ -240,15 +274,12 @@ def write_memo_fallback(results: dict) -> str:
     margin_str = f"${margin/1e6:,.2f}M" if margin is not None else "N/A"
     decisive_str = "decisive" if decisive else "NOT decisive"
 
-    bullets = [
-        f"Recommendation: Proceed with {rec}.",
-        f"Economics: Margins yield {margin_str} advantage ({decisive_str}).",
-        f"Exclusions: Excluded paths ({', '.join(excluded) if excluded else 'None'}) failed pre-declared thresholds.",
-    ]
-    
-    key_assumption = (
-        "Key Assumption Sensitivity: Monthly card spend per card. Direct issuance overtakes "
-        "partner models at higher volume thresholds."
+    excluded_text = ", ".join(excluded) if excluded else "No strategies"
+    return (
+        f"**Recommendation**  \nProceed with {rec}.\n\n"
+        f"**Evidence**  \nThe modeled advantage is {margin_str}; the result is "
+        f"{decisive_str}.\n\n"
+        f"**Risks**  \n{excluded_text} failed one or more investment criteria.\n\n"
+        "**Key sensitivity**  \nMonthly spend per card can change the ranking at "
+        "higher volumes."
     )
-    
-    return "EXECUTIVE MEMO (Deterministic Fallback)\n" + "\n".join(f"- {b}" for b in bullets) + "\n\n" + key_assumption

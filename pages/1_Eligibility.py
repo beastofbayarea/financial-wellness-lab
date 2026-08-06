@@ -1,4 +1,4 @@
-"""Dedicated Streamlit page for the eligibility MVP."""
+"""Dedicated Streamlit page for advance eligibility."""
 
 import streamlit as st
 

@@ -17,4 +17,4 @@ dev = ["pytest>=9.1.1"]
 include = ["eligibility*", "card_economics*", "ewa_sim*", "shared*"]
 
 [tool.pytest.ini_options]
-testpaths = ["eligibility", "card_economics", "tests"]
+testpaths = ["tests"]

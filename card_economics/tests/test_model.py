@@ -5,6 +5,7 @@ import copy
 import pytest
 
 from card_economics.model import load, evaluate_path, compare, break_even_spend, find_crossover_spend
+from shared import narrator
 from shared.narrator import write_memo_fallback
 
 
@@ -118,5 +119,16 @@ def test_sole_survivor_decisiveness_flag(a):
 def test_deterministic_memo_fallback(a):
     out = compare(a)
     memo = write_memo_fallback(out)
-    assert "EXECUTIVE MEMO (Deterministic Fallback)" in memo
+    assert "**Recommendation**" in memo
     assert out["recommended"] in memo
+
+
+def test_incomplete_or_ungrounded_generated_memo_falls_back(a, monkeypatch):
+    out = compare(a)
+    monkeypatch.setattr(
+        narrator,
+        "_call",
+        lambda *args, **kwargs: "Decision Memo: Q2 2024\n\nWe recommend proceeding",
+    )
+
+    assert narrator.write_memo(out) == narrator.write_memo_fallback(out)

@@ -1,7 +1,7 @@
 # Development setup
 
-The project supports Python 3.10 or newer and has one runtime dependency,
-PyYAML. Pytest is included in the optional `dev` dependency group.
+The project supports Python 3.10 or newer. Runtime dependencies are declared in
+`pyproject.toml`; Pytest is included in the optional `dev` dependency group.
 
 ## Clone and install
 
@@ -30,7 +30,7 @@ used without activation:
 
 ## Verify the checkout
 
-Run the complete suite and both executable examples from the repository root:
+Run the fast smoke suite and both executable examples from the repository root:
 
 ```bash
 python -m pytest
@@ -45,8 +45,14 @@ streamlit run dashboard.py
 ```
 
 Streamlit prints the local address (normally `http://localhost:8501`) and opens
-it in the default browser. Use the sidebar or home-page cards to open each MVP
+it in the default browser. Use the sidebar or home-page cards to open each workflow
 on its own page. Stop the server with `Ctrl+C`.
+
+Run the full validation suite before a release or after changing domain logic:
+
+```bash
+python -m pytest eligibility card_economics tests
+```
 
 The examples and dashboard work offline and use deterministic fallback text
 when narration is unavailable.
