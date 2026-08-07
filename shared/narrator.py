@@ -63,11 +63,6 @@ class LlmConfig:
 
 def llm_config() -> LlmConfig:
     """Read Cent-compatible Vertex settings from the process environment."""
-    raw_max_tokens = os.environ.get("GEMINI_MAX_TOKENS", str(DEFAULT_MAX_TOKENS))
-    try:
-        max_tokens = max(1, int(raw_max_tokens))
-    except ValueError:
-        max_tokens = DEFAULT_MAX_TOKENS
     return LlmConfig(
         project=os.environ.get("GCP_PROJECT_ID") or os.environ.get("GOOGLE_CLOUD_PROJECT"),
         location=(
@@ -76,7 +71,7 @@ def llm_config() -> LlmConfig:
             or DEFAULT_LOCATION
         ),
         model=os.environ.get("GEMINI_MODEL", DEFAULT_MODEL),
-        max_tokens=max_tokens,
+        max_tokens=DEFAULT_MAX_TOKENS,
     )
 
 

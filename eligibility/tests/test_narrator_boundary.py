@@ -48,7 +48,6 @@ def test_vertex_call_uses_cent_compatible_configuration(monkeypatch):
     monkeypatch.setenv("GCP_PROJECT_ID", "example-project")
     monkeypatch.setenv("GCP_REGION", "global")
     monkeypatch.setenv("GEMINI_MODEL", "gemini-flash-latest")
-    monkeypatch.setenv("GEMINI_MAX_TOKENS", "8192")
     monkeypatch.setattr(narrator.genai, "Client", FakeClient)
     monkeypatch.setattr(narrator, "_load_vertex_credentials", lambda: object())
 

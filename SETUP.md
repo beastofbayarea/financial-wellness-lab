@@ -75,7 +75,6 @@ The Cent-compatible defaults are:
 - `GCP_PROJECT_ID=cent-capital-472820`
 - `GCP_REGION=global`
 - `GEMINI_MODEL=gemini-flash-latest`
-- `GEMINI_MAX_TOKENS=8192`
 
 Authentication uses Google Application Default Credentials. For local user
 credentials, use `gcloud auth application-default login`. For a service
