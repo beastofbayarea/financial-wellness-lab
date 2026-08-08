@@ -1,8 +1,8 @@
 # Financial Wellness Lab
 
-Small models exploring a single question: **in consumer credit products, which decisions should be deterministic, and where does language actually belong?**
+**Financial Wellness Lab** is a fintech decision engine & credit architecture lab exploring a single core architectural question: **in consumer credit products, which decisions should be deterministic, and where does language actually belong?**
 
-My position is that the two get conflated. Teams reach for a model where a rule would do, and reach for a rule where a person needs an explanation. Each module here is an argument about where that line sits.
+Teams frequently conflate rules with language models — reaching for an LLM where a deterministic rule would do, and reaching for a rule where a human needs a clear explanation. This repository provides executable models for Earned Wage Access (EWA) eligibility, credit card partner economics, and portfolio margin simulations paired with interactive Streamlit visualizations and Gemini/Vertex AI explanation layers.
 
 ## The rule this repo follows
 

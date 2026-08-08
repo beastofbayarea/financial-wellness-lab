@@ -1,3 +1,26 @@
-Nothing should be ignored based on the provided file changes, as they only include Python init files (`__init__.py`) which are source code files and not build artifacts, dependencies, or temporary files. 
+# Environment files & secrets
+.env
+*.env
 
-Therefore, the output is empty.
+# Python & Pytest
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Build & packaging
+*.egg-info/
+dist/
+build/
+
+# Streamlit & IDE
+.streamlit/secrets.toml
+.vscode/
+.idea/

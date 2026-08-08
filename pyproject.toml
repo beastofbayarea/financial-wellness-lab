@@ -1,7 +1,7 @@
 [project]
 name = "financial-wellness-lab"
 version = "0.1.0"
-description = "Where consumer-credit decisions should be deterministic, and where language belongs"
+description = "Consumer credit architecture lab exploring deterministic decision engines vs LLM explanation layers — featuring EWA eligibility, credit card economics modeling, and Streamlit interactive workflows."
 requires-python = ">=3.10"
 dependencies = [
     "altair>=6.0.0",
