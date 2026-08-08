@@ -407,17 +407,22 @@ def render_card_economics() -> None:
     ]
     chart = (
         alt.Chart(alt.Data(values=chart_rows))
-        .mark_bar(cornerRadiusEnd=3, size=28)
+        .mark_bar(cornerRadiusEnd=4, size=28)
         .encode(
-            y=alt.Y("Strategy:N", sort="-x", title=None),
-            x=alt.X("Annual contribution:Q", title="Annual contribution", axis=alt.Axis(format="$,.0s", grid=True, gridColor="#E8ECEF")),
-            color=alt.condition(alt.datum.Highlight == "Recommended", alt.value("#174A73"), alt.value("#AAB7C2")),
+            y=alt.Y("Strategy:N", sort="-x", title=None, axis=alt.Axis(labelColor="#cbd5e1", labelFontSize=12)),
+            x=alt.X(
+                "Annual contribution:Q",
+                title="Annual contribution",
+                axis=alt.Axis(format="$,.0s", grid=True, gridColor="#1e293b", labelColor="#94a3b8", titleColor="#94a3b8"),
+            ),
+            color=alt.condition(alt.datum.Highlight == "Recommended", alt.value("#6366f1"), alt.value("#334155")),
             tooltip=[alt.Tooltip("Strategy:N"), alt.Tooltip("Annual contribution:Q", format="$,.0f")],
         )
         .properties(height=190)
+        .configure_view(strokeWidth=0)
     )
     st.altair_chart(chart, width="stretch")
-    st.caption("Annual contribution reflects the current scenario and is shown before tax. Navy identifies the recommended strategy.")
+    st.caption("Annual contribution reflects the current scenario and is shown before tax. Indigo identifies the recommended strategy.")
 
     st.markdown('<div class="section-kicker">What needs to be true</div>', unsafe_allow_html=True)
     st.markdown("### Monthly spend required to meet the contribution minimum")
@@ -440,108 +445,292 @@ def render_card_economics() -> None:
 
 
 def apply_dashboard_styles() -> None:
-    """Apply the shared high-contrast visual treatment to every dashboard page."""
+    """Apply a sleek, minimalist dark-mode visual treatment to every dashboard page."""
     st.markdown(
         """
         <style>
-        :root { color-scheme: light; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        :root { color-scheme: dark; }
+        
+        html, body, [data-testid="stAppViewContainer"] {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
         .stApp {
-            background: #ffffff;
-            color: #162432;
+            background: #090d16;
+            background-image: 
+                radial-gradient(ellipse at 50% 0%, #151d30 0%, #090d16 75%),
+                radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.04) 0%, transparent 50%);
+            color: #e2e8f0;
         }
-        .block-container { max-width: 1280px; padding-top: 2.5rem; padding-bottom: 3rem; }
-        .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+        
+        .block-container { max-width: 1280px; padding-top: 2.2rem; padding-bottom: 3.5rem; }
+        
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4 {
+            color: #f8fafc;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
         .stApp p, .stApp label, .stApp [data-testid="stCaptionContainer"] {
-            color: #162432;
+            color: #94a3b8;
         }
+        
         .section-kicker {
-            color: #486276; font-size: 0.72rem; font-weight: 750;
-            letter-spacing: 0.13em; text-transform: uppercase;
-            margin-top: 2.1rem; margin-bottom: 0.35rem;
+            color: #818cf8;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-top: 2.2rem;
+            margin-bottom: 0.4rem;
         }
+        
         .takeaway-headline {
-            color: #0b1f33; font-size: 2.05rem; font-weight: 720;
-            line-height: 1.17; max-width: 920px; margin-bottom: 0.45rem;
+            color: #f8fafc;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            max-width: 920px;
+            margin-bottom: 0.45rem;
+            letter-spacing: -0.02em;
         }
+        
         .takeaway-subtitle {
-            color: #5b6975; font-size: 1rem; max-width: 860px; margin-bottom: 1.25rem;
+            color: #94a3b8;
+            font-size: 1rem;
+            max-width: 860px;
+            margin-bottom: 1.25rem;
         }
+        
         .decision-note {
-            background: #eff4f8; border-left: 4px solid #174a73;
-            border-radius: 0 6px 6px 0; color: #223746;
-            padding: 0.9rem 1rem; margin: 0.85rem 0 1.8rem;
+            background: rgba(30, 41, 59, 0.6);
+            border-left: 4px solid #6366f1;
+            border-radius: 0 8px 8px 0;
+            color: #e2e8f0;
+            padding: 0.95rem 1.1rem;
+            margin: 0.85rem 0 1.8rem;
+            backdrop-filter: blur(8px);
         }
+        
         .scope-copy {
-            color: #5b6975; font-size: 1rem; line-height: 1.55;
-            max-width: 960px; margin: 0 0 1.2rem;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            max-width: 960px;
+            margin: 0 0 1.4rem;
         }
+        
         .strategy-card {
-            background: #ffffff; border-top: 4px solid #174a73;
-            border-right: 1px solid #d7dee4; border-bottom: 1px solid #d7dee4;
-            border-left: 1px solid #d7dee4; border-radius: 4px;
-            min-height: 330px; padding: 1.1rem 1.15rem; margin-bottom: 1.2rem;
+            background: rgba(17, 24, 39, 0.75);
+            border-top: 3px solid #6366f1;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            min-height: 320px;
+            padding: 1.2rem 1.25rem;
+            margin-bottom: 1.2rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
         }
+        
+        .strategy-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.12);
+        }
+        
         .strategy-card-title {
-            color: #0b1f33; font-size: 1.1rem; font-weight: 750; margin-bottom: 0.75rem;
+            color: #f8fafc;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
         }
-        .strategy-card p { color: #435463; font-size: 0.9rem; line-height: 1.48; }
+        
+        .strategy-card p {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
         .strategy-card-label {
-            color: #486276; font-size: 0.7rem; font-weight: 750;
-            letter-spacing: 0.09em; text-transform: uppercase; margin-top: 0.85rem;
+            color: #818cf8;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 0.9rem;
         }
+        
         [data-testid="stMetric"], .workflow-card {
-            background: #ffffff;
-            border: 1px solid #d7dee4;
-            border-radius: 8px;
-            padding: 1rem;
+            background: rgba(17, 24, 39, 0.75) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            padding: 1.1rem !important;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
         }
+
+        [data-testid="stMetric"]:hover {
+            border-color: rgba(99, 102, 241, 0.3) !important;
+        }
+        
+        [data-testid="stMetricLabel"] p {
+            color: #94a3b8 !important;
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        [data-testid="stMetricValue"] {
+            color: #f8fafc !important;
+            font-weight: 700 !important;
+        }
+        
         .workflow-card {
             min-height: 185px;
             margin-bottom: 0.75rem;
         }
-        .workflow-step {
-            color: #8f2f29;
-            font-size: 0.78rem;
-            font-weight: 750;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
+        
         .hero-kicker {
-            color: #8f2f29; font-size: 0.78rem; font-weight: 750;
-            letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.6rem;
+            color: #818cf8;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
         }
-        .hero-copy { color: #526158; font-size: 1.12rem; max-width: 720px; margin-bottom: 2rem; }
-        .principle { padding: 0.6rem 0; }
-        .principle strong { display: block; font-size: 0.96rem; margin-bottom: 0.2rem; }
-        .principle span { color: #66756c; font-size: 0.88rem; }
+        
+        .hero-copy {
+            color: #cbd5e1;
+            font-size: 1.15rem;
+            max-width: 740px;
+            margin-bottom: 2.2rem;
+            line-height: 1.6;
+        }
+        
+        .principle {
+            padding: 0.8rem 1rem;
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+        }
+        
+        .principle strong {
+            display: block;
+            font-size: 0.96rem;
+            color: #f8fafc;
+            margin-bottom: 0.25rem;
+        }
+        
+        .principle span {
+            color: #94a3b8;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+        
         [data-testid="stForm"] {
-            background: #ffffff;
-            border-color: #c8d5cc;
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
         }
-        [data-baseweb="input"] > div,
-        [data-baseweb="select"] > div {
-            background: #ffffff;
-            color: #17211b;
+        
+        /* Dark inputs & dropdowns */
+        div[data-baseweb="input"] > div,
+        div[data-baseweb="select"] > div {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+            border-radius: 8px !important;
         }
-        [data-testid="stFormSubmitButton"] button {
-            color: #ffffff;
-            font-weight: 650;
+
+        input {
+            color: #f8fafc !important;
         }
+
+        /* Buttons */
+        [data-testid="stFormSubmitButton"] button,
+        button[kind="primary"] {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+            border: none !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.35) !important;
+            transition: all 0.2s ease !important;
+        }
+
+        [data-testid="stFormSubmitButton"] button:hover,
+        button[kind="primary"]:hover {
+            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.5) !important;
+            transform: translateY(-1px);
+        }
+
         [data-testid="stFormSubmitButton"] button p,
         button[kind="primary"] p {
             color: #ffffff !important;
+            font-weight: 600 !important;
         }
-        [data-testid="stAlert"] p { color: inherit; }
-        [data-testid="stSidebar"] { border-right: 1px solid #d7e0d9; }
-        .product-name { font-size: 1.05rem; font-weight: 750; color: #17211b; }
-        .product-kicker { color: #5e6f64; font-size: 0.82rem; margin-bottom: 1.25rem; }
+        
+        /* Container Cards */
+        [data-testid="stVerticalBlock"] > div[data-testid="element-container"] > div[data-testid="stMarkdownContainer"] {
+            color: #e2e8f0;
+        }
+
+        /* Sidebar Styling */
+        [data-testid="stSidebar"] {
+            background: #0b0f19 !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+        
+        .product-name {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #f8fafc;
+            letter-spacing: -0.01em;
+        }
+        
+        .product-kicker {
+            color: #818cf8;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 1.4rem;
+        }
+        
         .nav-item {
-            display: block; padding: 0.68rem 0.8rem; margin: 0.2rem 0;
-            border-radius: 0.55rem; color: #34463a !important;
-            text-decoration: none !important; font-weight: 550;
+            display: block;
+            padding: 0.72rem 0.9rem;
+            margin: 0.25rem 0;
+            border-radius: 0.6rem;
+            color: #94a3b8 !important;
+            text-decoration: none !important;
+            font-weight: 500;
+            font-size: 0.93rem;
+            transition: all 0.2s ease;
         }
-        .nav-item:hover { background: #dfe9e2; }
-        .nav-item.active { background: #cddfd2; color: #173b25 !important; font-weight: 700; }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #f8fafc !important;
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(79, 70, 229, 0.1) 100%);
+            color: #818cf8 !important;
+            border-left: 3px solid #6366f1;
+            font-weight: 700;
+        }
+        
+        hr {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
