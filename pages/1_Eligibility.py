@@ -8,10 +8,12 @@ from dashboard import apply_dashboard_styles, render_eligibility, render_footer,
 st.set_page_config(page_title="Eligibility · Financial Wellness Lab", page_icon="✅", layout="wide")
 apply_dashboard_styles()
 render_navigation("Advance eligibility")
-st.title("Advance eligibility")
+st.markdown('<div class="hero-kicker">Policy Evaluation</div>', unsafe_allow_html=True)
+st.title("Advance eligibility review")
 st.markdown(
-    "Review an applicant scenario against the current advance policy and receive "
-    "a complete, explainable decision."
+    '<div class="hero-copy">Review an applicant scenario against policy rules '
+    'and receive a complete, explainable decision with deterministic audit details.</div>',
+    unsafe_allow_html=True,
 )
 render_eligibility()
 render_footer()
