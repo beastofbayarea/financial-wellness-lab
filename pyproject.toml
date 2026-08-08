@@ -4,15 +4,15 @@ version = "0.1.0"
 description = "Consumer credit architecture lab exploring deterministic decision engines vs LLM explanation layers — featuring EWA eligibility, credit card economics modeling, and Streamlit interactive workflows."
 requires-python = ">=3.10"
 dependencies = [
-    "altair>=6.0.0",
-    "google-genai>=2.17.0",
-    "python-dotenv>=1.2.2",
-    "PyYAML>=6.0.3",
-    "streamlit>=1.61.1",
+    "altair>=5.0.0",
+    "google-genai>=0.1.0",
+    "python-dotenv>=1.0.0",
+    "PyYAML>=6.0",
+    "streamlit>=1.30.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=9.1.1"]
+dev = ["pytest>=8.0.0"]
 
 [tool.setuptools.packages.find]
 include = ["eligibility*", "card_economics*", "ewa_sim*", "shared*"]

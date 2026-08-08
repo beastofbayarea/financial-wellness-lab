@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+import sys
 from copy import deepcopy
+from pathlib import Path
+
+# Ensure repository root is on sys.path for Streamlit Cloud deployment
+_ROOT_DIR = Path(__file__).resolve().parent
+if str(_ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(_ROOT_DIR))
 
 import altair as alt
 import streamlit as st
