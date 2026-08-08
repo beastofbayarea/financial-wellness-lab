@@ -7,8 +7,8 @@ textColor = "#E2E8F0"
 linkColor = "#818CF8"
 borderColor = "rgba(255, 255, 255, 0.08)"
 showWidgetBorder = true
-baseRadius = "medium"
-buttonRadius = "medium"
+baseRadius = "none"
+buttonRadius = "none"
 
 [theme.sidebar]
 backgroundColor = "#0B0F19"

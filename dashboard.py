@@ -414,7 +414,7 @@ def render_card_economics() -> None:
     ]
     chart = (
         alt.Chart(alt.Data(values=chart_rows))
-        .mark_bar(cornerRadiusEnd=4, size=28)
+        .mark_bar(cornerRadiusEnd=0, size=28)
         .encode(
             y=alt.Y("Strategy:N", sort="-x", title=None, axis=alt.Axis(labelColor="#cbd5e1", labelFontSize=12)),
             x=alt.X(
@@ -452,7 +452,7 @@ def render_card_economics() -> None:
 
 
 def apply_dashboard_styles() -> None:
-    """Apply a sleek, minimalist dark-mode visual treatment to every dashboard page."""
+    """Apply a sleek, minimalist dark-mode visual treatment with sharp straight edges and ample top padding."""
     st.markdown(
         """
         <style>
@@ -460,8 +460,19 @@ def apply_dashboard_styles() -> None:
         
         :root { color-scheme: dark; }
         
+        /* Enforce sharp straight edges on every element */
+        *, *::before, *::after {
+            border-radius: 0px !important;
+        }
+        
         html, body, [data-testid="stAppViewContainer"] {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        /* Make Streamlit top header bar unobtrusive and non-overlapping */
+        header[data-testid="stHeader"] {
+            background: transparent !important;
+            z-index: 1;
         }
         
         .stApp {
@@ -472,7 +483,12 @@ def apply_dashboard_styles() -> None:
             color: #e2e8f0;
         }
         
-        .block-container { max-width: 1280px; padding-top: 2.2rem; padding-bottom: 3.5rem; }
+        /* Ample top padding so top kicker text is never cut off on any page */
+        .block-container {
+            max-width: 1280px;
+            padding-top: 5rem !important;
+            padding-bottom: 3.5rem;
+        }
         
         .stApp h1, .stApp h2, .stApp h3, .stApp h4 {
             color: #f8fafc;
@@ -514,7 +530,7 @@ def apply_dashboard_styles() -> None:
         .decision-note {
             background: rgba(30, 41, 59, 0.6);
             border-left: 4px solid #6366f1;
-            border-radius: 0 8px 8px 0;
+            border-radius: 0px !important;
             color: #e2e8f0;
             padding: 0.95rem 1.1rem;
             margin: 0.85rem 0 1.8rem;
@@ -535,7 +551,7 @@ def apply_dashboard_styles() -> None:
             border-right: 1px solid rgba(255, 255, 255, 0.08);
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             border-left: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
+            border-radius: 0px !important;
             min-height: 320px;
             padding: 1.2rem 1.25rem;
             margin-bottom: 1.2rem;
@@ -571,10 +587,10 @@ def apply_dashboard_styles() -> None:
             margin-top: 0.9rem;
         }
         
-        [data-testid="stMetric"], .workflow-card {
+        [data-testid="stMetric"], .workflow-card, div[data-testid="stExpander"], div[data-testid="stContainer"] {
             background: rgba(17, 24, 39, 0.75) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 12px !important;
+            border-radius: 0px !important;
             padding: 1.1rem !important;
             backdrop-filter: blur(10px);
             transition: all 0.2s ease;
@@ -623,7 +639,7 @@ def apply_dashboard_styles() -> None:
             padding: 0.8rem 1rem;
             background: rgba(17, 24, 39, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 10px;
+            border-radius: 0px !important;
         }
         
         .principle strong {
@@ -642,44 +658,51 @@ def apply_dashboard_styles() -> None:
         [data-testid="stForm"] {
             background: rgba(17, 24, 39, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
+            border-radius: 0px !important;
             padding: 1.5rem;
             backdrop-filter: blur(12px);
         }
         
-        /* Dark inputs & dropdowns */
+        /* Dark inputs & dropdowns - Sharp straight edges */
         div[data-baseweb="input"] > div,
-        div[data-baseweb="select"] > div {
+        div[data-baseweb="select"] > div,
+        div[data-baseweb="popover"] > div {
             background: #1e293b !important;
             border-color: #334155 !important;
             color: #f8fafc !important;
-            border-radius: 8px !important;
+            border-radius: 0px !important;
         }
 
         input {
             color: #f8fafc !important;
         }
 
-        /* Buttons */
+        /* Buttons - Sharp straight edges */
         [data-testid="stFormSubmitButton"] button,
-        button[kind="primary"] {
+        button[kind="primary"],
+        .stButton button,
+        .stLinkButton a {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
             border: none !important;
             color: #ffffff !important;
             font-weight: 600 !important;
-            border-radius: 8px !important;
+            border-radius: 0px !important;
             box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.35) !important;
             transition: all 0.2s ease !important;
         }
 
         [data-testid="stFormSubmitButton"] button:hover,
-        button[kind="primary"]:hover {
+        button[kind="primary"]:hover,
+        .stButton button:hover,
+        .stLinkButton a:hover {
             box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.5) !important;
             transform: translateY(-1px);
         }
 
         [data-testid="stFormSubmitButton"] button p,
-        button[kind="primary"] p {
+        button[kind="primary"] p,
+        .stButton button p,
+        .stLinkButton a p {
             color: #ffffff !important;
             font-weight: 600 !important;
         }
@@ -689,10 +712,11 @@ def apply_dashboard_styles() -> None:
             color: #e2e8f0;
         }
 
-        /* Sidebar Styling */
+        /* Sidebar Styling - Sharp edges */
         [data-testid="stSidebar"] {
             background: #0b0f19 !important;
             border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 0px !important;
         }
         
         .product-name {
@@ -715,7 +739,7 @@ def apply_dashboard_styles() -> None:
             display: block;
             padding: 0.72rem 0.9rem;
             margin: 0.25rem 0;
-            border-radius: 0.6rem;
+            border-radius: 0px !important;
             color: #94a3b8 !important;
             text-decoration: none !important;
             font-weight: 500;
