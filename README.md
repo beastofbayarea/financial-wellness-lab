@@ -1,4 +1,6 @@
-# Financial Wellness Lab
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://financial-wellness-lab.streamlit.app)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Financial Wellness Lab** is a fintech decision engine & credit architecture lab exploring a single core architectural question: **in consumer credit products, which decisions should be deterministic, and where does language actually belong?**
 

@@ -3,6 +3,7 @@ name = "financial-wellness-lab"
 version = "0.1.0"
 description = "Consumer credit architecture lab exploring deterministic decision engines vs LLM explanation layers — featuring EWA eligibility, credit card economics modeling, and Streamlit interactive workflows."
 requires-python = ">=3.10"
+license = { text = "MIT" }
 dependencies = [
     "altair>=5.0.0",
     "google-genai>=0.1.0",
@@ -10,6 +11,12 @@ dependencies = [
     "PyYAML>=6.0",
     "streamlit>=1.30.0",
 ]
+
+[project.urls]
+Homepage = "https://financial-wellness-lab.streamlit.app"
+Documentation = "https://github.com/beastofbayarea/financial-wellness-lab#readme"
+Repository = "https://github.com/beastofbayarea/financial-wellness-lab.git"
+"Issue Tracker" = "https://github.com/beastofbayarea/financial-wellness-lab/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0"]
